@@ -5,7 +5,7 @@ tablename:hstest
 datetime :2014-02-10 09:49:08
 */
 import (
-	"github.com/gdao"
+	"github.com/donnie4w/gdao"
 	"reflect"
 )
 

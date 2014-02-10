@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"example/dao"
 	"fmt"
-	"github.com/gdao"
+	"github.com/donnie4w/gdao"
 	_ "github.com/go-sql-driver/mysql"
 	"time"
 )
