@@ -671,7 +671,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "datetime :" + t.Format("2006-01-02 15:04:05") + "\n"
 	fileContent = fileContent + "*/\n"
 	fileContent = fileContent + "import (\n"
-	fileContent = fileContent + "\t\"github.com/gdao\"\n"
+	fileContent = fileContent + "\t\"github.com/donnie4w/gdao\"\n"
 	fileContent = fileContent + "\t\"reflect\"\n"
 	fileContent = fileContent + ")\n\n"
 
