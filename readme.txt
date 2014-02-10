@@ -1,6 +1,11 @@
 gdao 是一个golang的orm库，
-gdao可以将数据库表映射生成响应的***.go文件(表名.go)，
-之后操作数据库单表就直接操作响应的go文件即可。同时支持原生sql语句。
+gdao可以将数据库表映射生成相应的***.go文件(表名.go)，
+之后操作数据库单表就直接操作相应的go文件即可。同时支持原生sql语句。
+
+注册数据源：3种方式，优先级从低到高
+	1、gdao.SetDB(db)
+	2、gdao.SetDBSrouceByTableName("hstest",db)
+	3、hstest.DB=db
 
 生成hstest表的hstest.go文件
 	gdao.CreateDaoFile("hstest", "dao", "d:/gdao/src/example/dao")
