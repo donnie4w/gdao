@@ -171,6 +171,48 @@ func createDaoTest() {
 	}
 }
 
+//事务测试
+func txTest() {
+	tx := gdao.GetTX()
+	tx.Begin()
+	hstest := dao.NewHstest()
+	hstest.SetTx(tx)
+	hstest.SetId(13)
+	hstest.SetName("wuxiaodong")
+	hstest.SetAge(30)
+	hstest.SetCreatetime(time.Now())
+	//插入数据
+	hstest.Insert()
+	c1 := make(chan int32, 2)
+
+	go func(c *chan int32) {
+		defer func() {
+			*c <- 1
+		}()
+		hstest2 := dao.NewHstest()
+		hstest2.SetTx(tx)
+		hstest2.Where(hstest2.Id.EQ(1))
+		//删除数据
+		hstest2.Delete()
+	}(&c1)
+
+	go func(c *chan int32) {
+		defer func() {
+			*c <- 2
+		}()
+		sqlstr := "insert into hstest(id,age,name)values(?,?,?)"
+		gdao.ExecuteUpdateTx(tx, sqlstr, 20, 41, "wuxiaodong")
+	}(&c1)
+	//go inserteTest()
+	//go inserteTest()
+	//go inserteTest()
+
+	fmt.Println(">>>>>", <-c1)
+	fmt.Println(">>>>>", <-c1)
+	//tx.RollBack()
+	tx.Commit()
+}
+
 func main() {
 	fmt.Println("main()")
 	//createTable()
@@ -182,4 +224,5 @@ func main() {
 	//inserteTest()
 	//deleteTest()
 	//createDaoTest()
+	//txTest()
 }

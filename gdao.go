@@ -90,6 +90,44 @@ type Table struct {
 	ModifyMap   map[string]interface{}
 	modifySql   string
 	DB          *sql.DB
+	Tx          *TX
+}
+
+type TX struct {
+	tx   *sql.Tx
+	isBg bool
+}
+
+func (t *Table) SetTx(tx *TX) {
+	t.Tx = tx
+}
+
+func (x *TX) Begin(dbsource ...*sql.DB) {
+	if dbsource != nil && len(dbsource) == 1 {
+		x.tx, _ = dbsource[0].Begin()
+		x.isBg = true
+	} else {
+		x.tx, _ = db.Begin()
+		x.isBg = true
+	}
+}
+
+func (x *TX) Commit() {
+	if x.tx != nil {
+		x.tx.Commit()
+		x.isBg = false
+	}
+}
+
+func (x *TX) RollBack() {
+	if x.tx != nil {
+		x.tx.Rollback()
+		x.isBg = false
+	}
+}
+
+func GetTX() *TX {
+	return &TX{isBg: false}
 }
 
 type Field struct {
@@ -324,11 +362,21 @@ func executeQuery_(dbsource *sql.DB, sql string, args ...interface{}) ([]*GoBeen
 }
 
 func ExecuteUpdate(sql string, args ...interface{}) (int64, error) {
-	return executeUpdate_(db, sql, args...)
+	return executeUpdate_(nil, db, sql, args...)
 }
 
-func executeUpdate_(dbsource *sql.DB, sql string, args ...interface{}) (int64, error) {
-	rs, err := dbsource.Exec(sql, args...)
+func ExecuteUpdateTx(x *TX, sql string, args ...interface{}) (int64, error) {
+	return executeUpdate_(x, db, sql, args...)
+}
+
+func executeUpdate_(x *TX, dbsource *sql.DB, sqlstr string, args ...interface{}) (int64, error) {
+	var rs sql.Result
+	var err error
+	if x != nil && x.tx != nil && x.isBg {
+		rs, err = x.tx.Exec(sqlstr, args...)
+	} else {
+		rs, err = dbsource.Exec(sqlstr, args...)
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -468,7 +516,7 @@ func (t *Table) Update() (int64, error) {
 	}
 	t.args = args
 	t.completeSql4Update()
-	return executeUpdate_(t.getDB(), t.sql, t.args...)
+	return executeUpdate_(t.Tx, t.getDB(), t.sql, t.args...)
 }
 
 func (t *Table) Insert() (int64, error) {
@@ -486,13 +534,13 @@ func (t *Table) Insert() (int64, error) {
 	}
 	t.args = args
 	t.logger(t.sql, t.args)
-	return executeUpdate_(t.getDB(), t.sql, t.args...)
+	return executeUpdate_(t.Tx, t.getDB(), t.sql, t.args...)
 }
 
 func (t *Table) Delete() (int64, error) {
 	t.modifySql = " delete from " + t.TableName
 	t.completeSql4Update()
-	return executeUpdate_(t.getDB(), t.sql, t.args...)
+	return executeUpdate_(t.Tx, t.getDB(), t.sql, t.args...)
 }
 
 func (f *Field) EQ(arg interface{}) *Where {
