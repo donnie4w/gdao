@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	_VER = "1.0.0"
+	_VER = "1.0.0.1"
 )
 
 var db *sql.DB
@@ -319,6 +319,9 @@ func (t *Table) executeQuery() ([][]interface{}, error) {
 		}
 		ts = append(ts, data)
 	}
+	if len(ts) == 0 {
+		return nil, nil
+	}
 	return ts, nil
 }
 
@@ -357,6 +360,9 @@ func executeQuery_(dbsource *sql.DB, sql string, args ...interface{}) ([]*GoBeen
 			return nil, row_err
 		}
 		gb = append(gb, gobeen)
+	}
+	if len(gb) == 0 {
+		return nil, nil
 	}
 	return gb, nil
 }
@@ -420,10 +426,10 @@ func (t *Table) executeQuerySingle() ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	cols, _ := rows.Columns()
-	buff := make([]interface{}, len(cols))
-	data := make([]interface{}, len(cols))
 	if rows.Next() {
+		cols, _ := rows.Columns()
+		buff := make([]interface{}, len(cols))
+		data := make([]interface{}, len(cols))
 		for i, _ := range buff {
 			buff[i] = &data[i]
 		}
@@ -431,8 +437,11 @@ func (t *Table) executeQuerySingle() ([]interface{}, error) {
 		if row_err != nil {
 			return nil, row_err
 		}
+		return data, nil
+	} else {
+		return nil, nil
 	}
-	return data, nil
+
 }
 
 func GetValue(data *interface{}) interface{} {
@@ -768,7 +777,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t}\n"
 
 	fileContent = fileContent + "\trs,err := t.Table.Query(columns...)\n"
-	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\tif rs != nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\tts := make([]" + tableName + ", 0, len(rs))\n"
@@ -794,7 +803,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t}\n"
 
 	fileContent = fileContent + "\trs,err := t.Table.QuerySingle(columns...)\n"
-	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\tif rs != nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\trt := New" + tableName + "()\n"
