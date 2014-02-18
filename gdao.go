@@ -777,7 +777,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t}\n"
 
 	fileContent = fileContent + "\trs,err := t.Table.Query(columns...)\n"
-	fileContent = fileContent + "\tif rs != nil || err != nil {\n"
+	fileContent = fileContent + "\tif rs == nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\tts := make([]" + tableName + ", 0, len(rs))\n"
@@ -803,7 +803,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t}\n"
 
 	fileContent = fileContent + "\trs,err := t.Table.QuerySingle(columns...)\n"
-	fileContent = fileContent + "\tif rs != nil || err != nil {\n"
+	fileContent = fileContent + "\tif rs == nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\trt := New" + tableName + "()\n"
