@@ -2,11 +2,16 @@ package main
 
 import (
 	"database/sql"
+	//"database/sql/driver"
 	"example/dao"
 	"fmt"
 	"github.com/donnie4w/gdao"
 	_ "github.com/go-sql-driver/mysql"
 	"time"
+)
+
+const (
+	TIMEFORMAT = "2006-01-02 15:04:05"
 )
 
 func initdb() {
@@ -19,6 +24,7 @@ func initdb() {
 	db.SetMaxIdleConns(10)
 	//	defer db.Close()
 	gdao.SetDB(db)
+	gdao.SetAdapterType(gdao.MYSQL)
 }
 
 func getDB() *sql.DB {
@@ -38,7 +44,7 @@ func init() {
 
 //创建表
 func createTable() {
-	sql := "CREATE TABLE `hstest` ( `id` int(10) NOT NULL DEFAULT '-1' COMMENT 'id',   `name` varchar(20) NOT NULL COMMENT '名字',   `age` int(10) NOT NULL DEFAULT '-1' COMMENT '年龄',   `createtime` datetime NOT NULL DEFAULT '1900-01-01 00:00:00' COMMENT '创建时间'  ) ENGINE=InnoDB DEFAULT CHARSET=utf8"
+	sql := "CREATE TABLE `hstest` ( `id` int(10) NOT NULL DEFAULT '-1' COMMENT 'id',   `name` varchar(20) NOT NULL COMMENT '名字',   `age` int(10) NOT NULL DEFAULT '-1' COMMENT '年龄',   `createtime` datetime NOT NULL DEFAULT '1900-01-01 00:00:00' COMMENT '创建时间', `money` float DEFAULT NULL  ) ENGINE=InnoDB DEFAULT CHARSET=utf8"
 	i, err := gdao.ExecuteUpdate(sql)
 	fmt.Println(">>>>", i)
 	if err != nil {
@@ -54,6 +60,10 @@ func goBeenTest1() {
 	hstest.SetCommentLine("/*master*/")
 	//查询自动非表字段名时，使用QueryBeen，返回([]*GoBeen, error)
 	gb, err := hstest.QueryBeen(hstest.Id.Count(), hstest.Age)
+	if gb == nil {
+		fmt.Println("no result")
+		return
+	}
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -79,11 +89,16 @@ func goBeenTest2() {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
+		if gbs == nil {
+			fmt.Println("no result")
+			return
+		}
 		for _, g := range gbs {
 			for _, v := range g.FieldBeens {
 				fmt.Println(v.Name(), v.Index(), v.Value())
 			}
-			fmt.Println(g.MapName("id").Index(), g.MapName("id").Name(), g.MapName("id").Value())
+			fmt.Println(g.MapName("id").Index(), g.MapName("id").Name(), g.MapName("id").ValueInt32())
+			fmt.Println(g.MapName("money").Index(), g.MapName("money").Name(), g.MapName("money").ValueFloat32())
 			fmt.Println(g.MapIndex(2).Index(), g.MapIndex(2).Name(), g.MapIndex(2).Value())
 			i--
 		}
@@ -100,14 +115,18 @@ func queryTest() {
 	hstest.OrderBy(hstest.Id.Asc())
 	hstest.Limit(0, 3)
 	//Query方法查询将返回[]Hstest
-	hstests, err := hstest.Query(hstest.Id, hstest.Age, hstest.Createtime, hstest.Name)
+	hstests, err := hstest.Query(hstest.Id, hstest.Age, hstest.Createtime, hstest.Name, hstest.Money)
 	if err != nil {
 		fmt.Println(err.Error())
+	}
+	if hstests == nil {
+		fmt.Println("no result")
+		return
 	}
 	//取值
 	for _, u := range hstests {
 		//使用字段的Get方法 Get***()
-		fmt.Println(">>>>", u.GetId(), u.GetAge(), u.GetCreatetime(), u.GetName())
+		fmt.Println(">>>>", u.GetId(), u.GetAge(), u.GetCreatetime(), u.GetName(), u.GetMoney())
 	}
 }
 
@@ -116,13 +135,17 @@ func queryTest2() {
 	hstest.IsLog(true)
 	hstest.DB = getDB()
 	hstest.SetCommentLine("/*master*/")
-	hstest.Where(hstest.Id.EQ(3), hstest.Age.IN(30, 31, 32, 33, 34))
+	hstest.Where(hstest.Id.EQ(13), hstest.Age.IN(30, 31, 32, 33, 34))
 	hstest.GroupBy(hstest.Id)
 	hstest.Having(hstest.Id.Count().GT(0))
 	hstest.OrderBy(hstest.Id.Asc())
 	hstest.Limit(0, 1)
 	//QuerySingle方法返回一行数据
 	hstest, _ = hstest.QuerySingle(hstest.Id, hstest.Age, hstest.Createtime, hstest.Name)
+	if hstest == nil {
+		fmt.Println("no result")
+		return
+	}
 	fmt.Println(">>>>", hstest.GetId(), hstest.GetAge(), hstest.GetCreatetime(), hstest.GetName())
 }
 
@@ -141,10 +164,10 @@ func inserteTest() {
 	fmt.Println("inserteTest() ")
 	hstest := dao.NewHstest()
 	hstest.IsLog(true)
-	hstest.SetId(1)
-	hstest.SetName("wuxiaodong")
+	hstest.SetId(5)
+	hstest.SetName("wuxiaodong5")
 	hstest.SetAge(30)
-	hstest.SetCreatetime(time.Now())
+	hstest.SetCreatetime(time.Now().Format(TIMEFORMAT))
 	//插入数据
 	i, err := hstest.Insert()
 	fmt.Println(i)
@@ -163,11 +186,27 @@ func deleteTest() {
 	hstest.Delete()
 }
 
+// 生成表对应go文件
 func createDaoTest() {
-	//创建数据表hstest相应的hstest.go文件，包名为dao,路径为d:/gdao/src/dao
-	err := gdao.CreateDaoFile("hstest", "dao", "d:/gdao/src/dao")
+	//创建数据表hstest相应的hstest.go文件，包名为dao,路径为d:/gdao/src/example/dao
+	err := gdao.CreateDaoFile("hstest", "dao", "d:/gdao/src/example/dao")
 	if err != nil {
 		fmt.Println(err.Error())
+	}
+}
+
+//批量生成数据库所有表对应的go文件
+func createAllDaoTest() {
+	gbs, _ := gdao.ExecuteQuery("show tables")
+	for _, g := range gbs {
+		for _, v := range g.FieldBeens {
+			fmt.Println(v.Name(), v.Index(), v.Value())
+			g := v.Value()
+			err := gdao.CreateDaoFile(g.(string), "dao", "d:/gdao/src/example/dao")
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+		}
 	}
 }
 
@@ -180,7 +219,7 @@ func txTest() {
 	hstest.SetId(13)
 	hstest.SetName("wuxiaodong")
 	hstest.SetAge(30)
-	hstest.SetCreatetime(time.Now())
+	hstest.SetCreatetime(time.Now().String())
 	//插入数据
 	hstest.Insert()
 	c1 := make(chan int32, 2)
@@ -217,12 +256,13 @@ func main() {
 	fmt.Println("main()")
 	//createTable()
 	//goBeenTest1()
-	goBeenTest2()
+	//goBeenTest2()
 	//queryTest()
 	//queryTest2()
 	//updateTest()
 	//inserteTest()
 	//deleteTest()
 	//createDaoTest()
+	//createAllDaoTest()
 	//txTest()
 }

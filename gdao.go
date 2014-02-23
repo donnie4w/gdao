@@ -9,16 +9,41 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
+type DbType int32
+
 const (
-	_VER = "1.0.0.1"
+	_VER = "1.0.1"
+)
+const (
+	_ DbType = iota
+	MYSQL
+	PostgreSQL
 )
 
+var adapter DbType = MYSQL
+
+var _MYSQL_TABLE_SCHMAINFO_SQL string = "SELECT column_name,data_type FROM information_schema.COLUMNS WHERE TABLE_NAME=?"
+var _PostgreSQL_TABLE_SCHMAINFO_SQL string = "SELECT column_name,data_type FROM information_schema.COLUMNS WHERE TABLE_NAME=?"
+
+//var _SQLITE_TABLE_SCHMAINFO_SQL string = ""
+//var _ORACLE_TABLE_SCHMAINFO_SQL string = ""
+//var _SQLSERVER_TABLE_SCHMAINFO_SQL string = ""
+//var _DB2_TABLE_SCHMAINFO_SQL string = ""
+
+var adapterMap = map[DbType]string{MYSQL: _MYSQL_TABLE_SCHMAINFO_SQL, PostgreSQL: _PostgreSQL_TABLE_SCHMAINFO_SQL}
+
 var db *sql.DB
+
 var dbMap map[string]*sql.DB = make(map[string]*sql.DB)
+
+func SetAdapterType(t DbType) {
+	adapter = t
+}
 
 func SetDB(_db *sql.DB) {
 	db = _db
@@ -41,6 +66,86 @@ type FieldBeen struct {
 
 func (f *FieldBeen) Value() interface{} {
 	return GetValue(&f.fieldValue)
+}
+
+func (f *FieldBeen) ValueString() string {
+	return GetValue(&f.fieldValue).(string)
+}
+
+func (f *FieldBeen) ValueInt64() int64 {
+	switch (f.fieldValue).(type) {
+	case int64:
+		return int64((f.fieldValue).(int64))
+	case int32:
+		return int64((f.fieldValue).(int32))
+	case int16:
+		return int64((f.fieldValue).(int16))
+	case int8:
+		return int64((f.fieldValue).(int8))
+	case uint64:
+		return int64((f.fieldValue).(uint64))
+	case uint32:
+		return int64((f.fieldValue).(uint32))
+	case uint16:
+		return int64((f.fieldValue).(uint16))
+	case uint8:
+		return int64((f.fieldValue).(uint8))
+	case int:
+		return int64((f.fieldValue).(int))
+	case float32:
+		return int64((f.fieldValue).(float32))
+	case float64:
+		return int64((f.fieldValue).(float64))
+	case []uint8:
+		i, _ := strconv.ParseInt(string((f.fieldValue).([]uint8)), 0, 0)
+		return int64(i)
+	default:
+		return int64((f.fieldValue).(int64))
+	}
+}
+
+func (f *FieldBeen) ValueInt32() int32 {
+	return int32(f.ValueInt64())
+}
+
+func (f *FieldBeen) ValueInt16() int16 {
+	return int16(f.ValueInt64())
+}
+
+func (f *FieldBeen) ValueFloat64() float64 {
+	switch (f.fieldValue).(type) {
+	case int64:
+		return float64((f.fieldValue).(int64))
+	case int32:
+		return float64((f.fieldValue).(int32))
+	case int16:
+		return float64((f.fieldValue).(int16))
+	case int8:
+		return float64((f.fieldValue).(int8))
+	case uint64:
+		return float64((f.fieldValue).(uint64))
+	case uint32:
+		return float64((f.fieldValue).(uint32))
+	case uint16:
+		return float64((f.fieldValue).(uint16))
+	case uint8:
+		return float64((f.fieldValue).(uint8))
+	case int:
+		return float64((f.fieldValue).(int))
+	case float32:
+		return float64((f.fieldValue).(float32))
+	case float64:
+		return float64((f.fieldValue).(float64))
+	case []uint8:
+		i, _ := strconv.ParseInt(string((f.fieldValue).([]uint8)), 0, 0)
+		return float64(i)
+	default:
+		return float64((f.fieldValue).(int64))
+	}
+}
+
+func (f *FieldBeen) ValueFloat32() float32 {
+	return float32(f.ValueFloat64())
 }
 
 func (f *FieldBeen) Name() string {
@@ -207,6 +312,7 @@ func (t *Table) Where(wheres ...*Where) {
 	s := strings.Join(whereSqls, " and ")
 	t.whereSql = " where " + s
 }
+
 func (t *Table) IsLog(islog bool) {
 	t.islog = islog
 }
@@ -447,11 +553,62 @@ func (t *Table) executeQuerySingle() ([]interface{}, error) {
 func GetValue(data *interface{}) interface{} {
 	switch (*data).(type) {
 	case int64:
-		return (*data)
+		return (*data).(int64)
+	case int32:
+		return (*data).(int32)
+	case int16:
+		return (*data).(int16)
+	case int8:
+		return (*data).(int8)
+	case uint64:
+		return (*data).(uint64)
+	case uint32:
+		return (*data).(uint32)
+	case uint16:
+		return (*data).(uint16)
+	case uint8:
+		return (*data).(uint8)
+	case int:
+		return (*data).(int)
+	case float32:
+		return (*data).(float32)
+	case float64:
+		return (*data).(float64)
 	case []uint8:
 		return string((*data).([]uint8))
 	default:
 		return (*data)
+	}
+}
+
+func getTypeString(data *interface{}) string {
+	switch (*data).(type) {
+	case int64:
+		return "int64"
+	case int32:
+		return "int32"
+	case int16:
+		return "int16"
+	case int8:
+		return "int8"
+	case uint64:
+		return "uint64"
+	case uint32:
+		return "uint32"
+	case uint16:
+		return "uint16"
+	case uint8:
+		return "uint8"
+	case int:
+		return "int"
+	case float32:
+		return "float32"
+	case float64:
+		return "float64"
+	case []uint8:
+		return "string"
+	default:
+		return "string"
 	}
 }
 
@@ -700,14 +857,32 @@ func (t *Table) SetCommentLine(commentline string) {
 	t.commentline = commentline
 }
 
-func CreateDaoFile(tableName, packageName, destPath string) error {
-	sql := "select * from " + tableName
-	rows, err := db.Query(sql)
-	if err != nil {
-		return err
+func getTableColumnInfo(tablName string) *map[string][2]string {
+	rows, _ := db.Query(getAdapterSqlStr(), tablName)
+	defer rows.Close()
+	mapname := make(map[string][2]string)
+	for rows.Next() {
+		var column_name string
+		var data_type string
+		rows.Scan(&column_name, &data_type)
+		mapname[column_name] = getTypeStrs(data_type)
 	}
-	cols, _ := rows.Columns()
-	str := createFile(tableName, cols, packageName)
+	return &mapname
+}
+
+func getAdapterSqlStr() string {
+	switch adapter {
+	case MYSQL:
+		return _MYSQL_TABLE_SCHMAINFO_SQL
+	case PostgreSQL:
+		return _PostgreSQL_TABLE_SCHMAINFO_SQL
+	default:
+		return _MYSQL_TABLE_SCHMAINFO_SQL
+	}
+}
+
+func CreateDaoFile(tableName, packageName, destPath string) error {
+	str := createFile(tableName, getTableColumnInfo(tableName), packageName)
 	fileName := destPath + "/" + tableName + ".go"
 	f, err := os.Create(fileName)
 	defer f.Close()
@@ -719,7 +894,7 @@ func CreateDaoFile(tableName, packageName, destPath string) error {
 	return nil
 }
 
-func createFile(table string, fields []string, packageName string) string {
+func createFile(table string, columnMap *map[string][2]string, packageName string) string {
 	tableName := ToUpperFirstLetter(table)
 	fileContent := "package " + packageName + "\n\n"
 	fileContent = fileContent + "/**\n"
@@ -732,12 +907,12 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t\"reflect\"\n"
 	fileContent = fileContent + ")\n\n"
 
-	for _, field := range fields {
+	for field, data_type := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		fileContent = fileContent + "type " + table + "_" + f + " struct {\n"
 		fileContent = fileContent + "\tgdao.Field\n"
 		fileContent = fileContent + "\tfieldName  string\n"
-		fileContent = fileContent + "\tFieldValue interface{}\n"
+		fileContent = fileContent + "\tFieldValue *" + data_type[0] + "\n"
 		fileContent = fileContent + "}\n\n"
 
 		fileContent = fileContent + "func (c *" + table + "_" + f + ") Name() string {\n"
@@ -751,25 +926,26 @@ func createFile(table string, fields []string, packageName string) string {
 
 	fileContent = fileContent + "type " + tableName + " struct {\n"
 	fileContent = fileContent + "\tgdao.Table\n"
-	for _, field := range fields {
+	for field, _ := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		fileContent = fileContent + "\t" + f + " *" + table + "_" + f + "\n"
 	}
 	fileContent = fileContent + "}\n\n"
 
-	for _, field := range fields {
+	for field, data_type := range *columnMap {
 		f := ToUpperFirstLetter(field)
-		fileContent = fileContent + "func (u *" + tableName + ") Get" + f + "() interface{} {\n"
-		fileContent = fileContent + "\treturn u." + f + ".FieldValue\n}\n\n"
-		fileContent = fileContent + "func (u *" + tableName + ") Set" + f + "(arg interface{}) {\n"
+		fileContent = fileContent + "func (u *" + tableName + ") Get" + f + "() " + data_type[0] + " {\n"
+		fileContent = fileContent + "\treturn *u." + f + ".FieldValue\n}\n\n"
+		fileContent = fileContent + "func (u *" + tableName + ") Set" + f + "(arg " + data_type[1] + ") {\n"
 		fileContent = fileContent + "\tu.Table.ModifyMap[u." + f + ".fieldName] = arg\n"
-		fileContent = fileContent + "\tu." + f + ".FieldValue = arg\n"
+		fileContent = fileContent + "\tv := " + data_type[0] + "(arg)\n"
+		fileContent = fileContent + "\tu." + f + ".FieldValue = &v\n"
 		fileContent = fileContent + "}\n\n"
 	}
 	fileContent = fileContent + "func (t *" + tableName + ") Query(columns ...gdao.Column) ([]" + tableName + ",error) {\n"
 	fileContent = fileContent + "\tif columns == nil {\n"
 	fs := make([]string, 0)
-	for _, field := range fields {
+	for field, _ := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		fs = append(fs, "t."+f)
 	}
@@ -781,21 +957,30 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\tts := make([]" + tableName + ", 0, len(rs))\n"
+	fileContent = fileContent + "\tc := make(chan int16,len(rs))\n"
 	fileContent = fileContent + "\tfor _, rows := range rs {\n"
 	fileContent = fileContent + "\t\tt := New" + tableName + "()\n"
-	fileContent = fileContent + "\t\tfor j, core := range rows {\n"
-	fileContent = fileContent + "\t\t\tif core == nil {\n"
-	fileContent = fileContent + "\t\t\t\tcontinue\n"
-	fileContent = fileContent + "\t\t\t}\n"
-	fileContent = fileContent + "\t\t\tfield := columns[j].Name()\n"
-	fileContent = fileContent + "\t\t\tsetfield := \"Set\" + gdao.ToUpperFirstLetter(field)\n"
-	fileContent = fileContent + "\t\t\treflect.ValueOf(t).MethodByName(setfield).Call([]reflect.Value{reflect.ValueOf(gdao.GetValue(&core))})\n"
-	fileContent = fileContent + "\t\t}\n"
+
+	fileContent = fileContent + "\t\tgo copy" + tableName + "(c, rows, t, columns)\n"
+	fileContent = fileContent + "\t\t<-c\n"
+
 	fileContent = fileContent + "\t\tts = append(ts, *t)\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\treturn ts,nil\n"
 	fileContent = fileContent + "}\n\n"
 
+	copy := `func copy` + tableName + `(channle chan int16, rows []interface{}, t *` + tableName + `, columns []gdao.Column) {
+	defer func() { channle <- 1 }()
+	for j, core := range rows {
+		if core == nil {
+			continue
+		}
+		field := columns[j].Name()
+		setfield := "Set" + gdao.ToUpperFirstLetter(field)
+		reflect.ValueOf(t).MethodByName(setfield).Call([]reflect.Value{reflect.ValueOf(gdao.GetValue(&core))})
+	}
+}`
+	fileContent = fileContent + copy + "\n\n"
 	fileContent = fileContent + "func (t *" + tableName + ") QuerySingle(columns ...gdao.Column) (*" + tableName + ",error) {\n"
 	fileContent = fileContent + "\tif columns == nil {\n"
 
@@ -819,7 +1004,7 @@ func createFile(table string, fields []string, packageName string) string {
 	fileContent = fileContent + "}\n\n"
 
 	fileContent = fileContent + "func New" + tableName + "(tableName ...string) *" + tableName + " {\n"
-	for _, field := range fields {
+	for field, _ := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		fileContent = fileContent + "\t" + checkReserveKey(field) + " := &" + table + "_" + f + "{fieldName: \"" + field + "\"}\n"
 		fileContent = fileContent + "\t" + checkReserveKey(field) + ".Field.FieldName = \"" + field + "\"\n"
@@ -827,7 +1012,7 @@ func createFile(table string, fields []string, packageName string) string {
 
 	fileContent = fileContent + "\ttable := &" + tableName + "{"
 	ss := make([]string, 0)
-	for _, field := range fields {
+	for field, _ := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		ss = append(ss, f+":"+checkReserveKey(field))
 	}
@@ -851,4 +1036,103 @@ func checkReserveKey(k string) string {
 		return k + "_"
 	}
 	return k
+}
+
+func getTypeStrs(t string) [2]string {
+	switch adapter {
+	case MYSQL:
+		return typeOfMysql2go(t)
+	case PostgreSQL:
+		return typePostgreSQL2go(t)
+	default:
+		return typeOfMysql2go(t)
+	}
+}
+
+func typeOfMysql2go(t string) [2]string {
+	switch strings.ToUpper(t) {
+	case "CHAR":
+		return [...]string{"string", "string"}
+	case "VARCHAR":
+		return [...]string{"string", "string"}
+	case "TINYTEXT":
+		return [...]string{"string", "string"}
+	case "TEXT":
+		return [...]string{"string", "string"}
+	case "MEDIUMTEXT":
+		return [...]string{"string", "string"}
+	case "LONGTEXT":
+		return [...]string{"string", "string"}
+	case "BIT":
+		return [...]string{"int64", "int64"}
+	case "TINYINT":
+		return [...]string{"int16", "int64"}
+	case "BOOL":
+		return [...]string{"int16", "int64"}
+	case "BOOLEAN":
+		return [...]string{"int16", "int64"}
+	case "SMALLINT":
+		return [...]string{"int32", "int64"}
+	case "MEDIUMINT":
+		return [...]string{"int32", "int64"}
+	case "INT":
+		return [...]string{"int32", "int64"}
+	case "INTEGER":
+		return [...]string{"int64", "int64"}
+	case "BIGINT":
+		return [...]string{"int64", "int64"}
+	case "FLOAT":
+		return [...]string{"float32", "float64"}
+	case "DOUBLE":
+		return [...]string{"float64", "float64"}
+	case "DECIMAL":
+		return [...]string{"float64", "float64"}
+	case "DATE":
+		return [...]string{"string", "string"}
+	case "DATETIME":
+		return [...]string{"string", "string"}
+	case "TIMESTAMP":
+		return [...]string{"string", "string"}
+	case "TIME":
+		return [...]string{"string", "string"}
+	case "YEAR":
+		return [...]string{"string", "string"}
+	default:
+		return [...]string{"string", "string"}
+	}
+}
+
+func typePostgreSQL2go(t string) [2]string {
+	switch strings.ToUpper(t) {
+	case "SMALLINT":
+		return [...]string{"int16", "int64"}
+	case "INTEGER":
+		return [...]string{"int32", "int64"}
+	case "BIGINT":
+		return [...]string{"int64", "int64"}
+	case "NUMERIC":
+		return [...]string{"float64", "float64"}
+	case "REAL":
+		return [...]string{"float32", "float64"}
+	case "DOUBLE":
+		return [...]string{"float64", "float64"}
+	case "SERIAL":
+		return [...]string{"int64", "int64"}
+	case "BIGSERIAL":
+		return [...]string{"int64", "int64"}
+	case "VARCHAR":
+		return [...]string{"string", "string"}
+	case "CHAR":
+		return [...]string{"string", "string"}
+	case "TEXT":
+		return [...]string{"string", "string"}
+	case "TIMESTAMP":
+		return [...]string{"string", "string"}
+	case "DATE":
+		return [...]string{"string", "string"}
+	case "TIME":
+		return [...]string{"string", "string"}
+	default:
+		return [...]string{"string", "string"}
+	}
 }
