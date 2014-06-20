@@ -27,8 +27,8 @@ const (
 
 var adapter DbType = MYSQL
 
-var _MYSQL_TABLE_SCHMAINFO_SQL string = "SELECT column_name,data_type FROM information_schema.COLUMNS WHERE TABLE_NAME=?"
-var _PostgreSQL_TABLE_SCHMAINFO_SQL string = "SELECT column_name,data_type FROM information_schema.COLUMNS WHERE TABLE_NAME=?"
+var _MYSQL_TABLE_SCHMAINFO_SQL string = "SHOW COLUMNS FROM "
+var _PostgreSQL_TABLE_SCHMAINFO_SQL string = "SELECT column_name,data_type FROM information_schema.COLUMNS WHERE TABLE_NAME="
 
 //var _SQLITE_TABLE_SCHMAINFO_SQL string = ""
 //var _ORACLE_TABLE_SCHMAINFO_SQL string = ""
@@ -858,13 +858,13 @@ func (t *Table) SetCommentLine(commentline string) {
 }
 
 func getTableColumnInfo(tablName string) *map[string][2]string {
-	rows, _ := db.Query(getAdapterSqlStr(), tablName)
+	rows, _ := db.Query(getAdapterSqlStr() + tablName)
 	defer rows.Close()
 	mapname := make(map[string][2]string)
 	for rows.Next() {
 		var column_name string
 		var data_type string
-		rows.Scan(&column_name, &data_type)
+		rows.Scan(&column_name, &data_type, nil, nil, nil, nil)
 		mapname[column_name] = getTypeStrs(data_type)
 	}
 	return &mapname
@@ -1050,6 +1050,7 @@ func getTypeStrs(t string) [2]string {
 }
 
 func typeOfMysql2go(t string) [2]string {
+	t = strings.Replace(t, regexp.MustCompile("\\(\\d*?\\)").FindString(t), "", -1)
 	switch strings.ToUpper(t) {
 	case "CHAR":
 		return [...]string{"string", "string"}
