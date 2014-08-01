@@ -322,6 +322,21 @@ func (t *Table) logger(v ...interface{}) {
 		log.Println("[gdao log]", v)
 	}
 }
+
+func (t *Table) Selects(columns ...Column) (rows *sql.Rows, err error) {
+	t.completeSql4Columns(columns...)
+	t.completeSql4Query()
+	return t.executeQuery_()
+}
+
+func (t *Table) executeQuery_() (rows *sql.Rows, err error) {
+	rows, err = t.getDB().Query(t.sql, t.args...)
+	if err != nil {
+		return nil, err
+	}
+	return
+}
+
 func (t *Table) Query(columns ...Column) ([][]interface{}, error) {
 	t.completeSql4Columns(columns...)
 	t.completeSql4Query()
@@ -418,6 +433,7 @@ func (t *Table) executeQuery() ([][]interface{}, error) {
 		data := make([]interface{}, len(cols))
 		for i, _ := range buff {
 			buff[i] = &data[i]
+			//buff[i] = data[i]
 		}
 		row_err := rows.Scan(buff...)
 		if row_err != nil {
@@ -923,7 +939,6 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 		fileContent = fileContent + "\treturn c.FieldValue\n"
 		fileContent = fileContent + "}\n\n"
 	}
-
 	fileContent = fileContent + "type " + tableName + " struct {\n"
 	fileContent = fileContent + "\tgdao.Table\n"
 	for field, _ := range *columnMap {
@@ -951,7 +966,6 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	}
 	fileContent = fileContent + "\t\tcolumns = []gdao.Column{ " + strings.Join(fs, ",") + "}\n"
 	fileContent = fileContent + "\t}\n"
-
 	fileContent = fileContent + "\trs,err := t.Table.Query(columns...)\n"
 	fileContent = fileContent + "\tif rs == nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
@@ -960,10 +974,8 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	fileContent = fileContent + "\tc := make(chan int16,len(rs))\n"
 	fileContent = fileContent + "\tfor _, rows := range rs {\n"
 	fileContent = fileContent + "\t\tt := New" + tableName + "()\n"
-
 	fileContent = fileContent + "\t\tgo copy" + tableName + "(c, rows, t, columns)\n"
 	fileContent = fileContent + "\t\t<-c\n"
-
 	fileContent = fileContent + "\t\tts = append(ts, *t)\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\treturn ts,nil\n"
@@ -983,10 +995,8 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	fileContent = fileContent + copy + "\n\n"
 	fileContent = fileContent + "func (t *" + tableName + ") QuerySingle(columns ...gdao.Column) (*" + tableName + ",error) {\n"
 	fileContent = fileContent + "\tif columns == nil {\n"
-
 	fileContent = fileContent + "\t\tcolumns = []gdao.Column{ " + strings.Join(fs, ",") + "}\n"
 	fileContent = fileContent + "\t}\n"
-
 	fileContent = fileContent + "\trs,err := t.Table.QuerySingle(columns...)\n"
 	fileContent = fileContent + "\tif rs == nil || err != nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
@@ -1003,13 +1013,69 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	fileContent = fileContent + "\treturn rt,nil\n"
 	fileContent = fileContent + "}\n\n"
 
+	fileContent = fileContent + "func (t *" + tableName + ") Select(columns ...gdao.Column) (*" + tableName + ",error) {\n"
+	fileContent = fileContent + "\tif columns == nil {\n"
+	fileContent = fileContent + "\t\tcolumns = []gdao.Column{ " + strings.Join(fs, ",") + "}\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\trows,err := t.Table.Selects(columns...)\n"
+	fileContent = fileContent + "\tdefer rows.Close()\n"
+	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\t\treturn nil, err\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\tbuff := make([]interface{}, len(columns))\n"
+	fileContent = fileContent + "\tif rows.Next() {\n"
+	fileContent = fileContent + "\t\tn := New" + tableName + "()\n"
+	fileContent = fileContent + "\t\tcp" + tableName + "(buff, n, columns)\n"
+	fileContent = fileContent + "\t\trow_err := rows.Scan(buff...)\n"
+	fileContent = fileContent + "\t\tif row_err != nil {\n"
+	fileContent = fileContent + "\t\t\treturn nil, row_err\n"
+	fileContent = fileContent + "\t\t}\n"
+	fileContent = fileContent + "\t\treturn n, nil\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\treturn nil, nil\n"
+	fileContent = fileContent + "}\n\n"
+
+	fileContent = fileContent + "func (t *" + tableName + ") Selects(columns ...gdao.Column) ([]*" + tableName + ",error) {\n"
+	fileContent = fileContent + "\tif columns == nil {\n"
+	fileContent = fileContent + "\t\tcolumns = []gdao.Column{ " + strings.Join(fs, ",") + "}\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\trows,err := t.Table.Selects(columns...)\n"
+	fileContent = fileContent + "\tdefer rows.Close()\n"
+	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\t\treturn nil, err\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\tns := make([]*" + tableName + ", 0)\n"
+	fileContent = fileContent + "\tbuff := make([]interface{}, len(columns))\n"
+	fileContent = fileContent + "\tfor rows.Next() {\n"
+	fileContent = fileContent + "\t\tn := New" + tableName + "()\n"
+	fileContent = fileContent + "\t\tcp" + tableName + "(buff, n, columns)\n"
+	fileContent = fileContent + "\t\trow_err := rows.Scan(buff...)\n"
+	fileContent = fileContent + "\t\tif row_err != nil {\n"
+	fileContent = fileContent + "\t\t\treturn nil, row_err\n"
+	fileContent = fileContent + "\t\t}\n"
+	fileContent = fileContent + "\t\tns = append(ns, n)\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "\treturn ns, nil\n"
+	fileContent = fileContent + "}\n\n"
+
+	fileContent = fileContent + "func  cp" + tableName + "(buff []interface{}, t *" + tableName + ", columns []gdao.Column) {\n"
+	fileContent = fileContent + "\tfor i, column := range columns {\n"
+	fileContent = fileContent + "\t\tfield := column.Name()\n"
+	fileContent = fileContent + "\t\tswitch field {\n"
+	for field, _ := range *columnMap {
+		fileContent = fileContent + "\t\tcase \"" + field + "\":\n"
+		fileContent = fileContent + "\t\t\tbuff[i] = &t." + ToUpperFirstLetter(field) + ".FieldValue\n"
+	}
+	fileContent = fileContent + "\t\t}\n"
+	fileContent = fileContent + "\t}\n"
+	fileContent = fileContent + "}\n\n"
+
 	fileContent = fileContent + "func New" + tableName + "(tableName ...string) *" + tableName + " {\n"
 	for field, _ := range *columnMap {
 		f := ToUpperFirstLetter(field)
 		fileContent = fileContent + "\t" + checkReserveKey(field) + " := &" + table + "_" + f + "{fieldName: \"" + field + "\"}\n"
 		fileContent = fileContent + "\t" + checkReserveKey(field) + ".Field.FieldName = \"" + field + "\"\n"
 	}
-
 	fileContent = fileContent + "\ttable := &" + tableName + "{"
 	ss := make([]string, 0)
 	for field, _ := range *columnMap {
@@ -1017,7 +1083,6 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 		ss = append(ss, f+":"+checkReserveKey(field))
 	}
 	fileContent = fileContent + strings.Join(ss, ",") + "}\n"
-
 	fileContent = fileContent + "\ttable.Table.ModifyMap = make(map[string]interface{})\n"
 	fileContent = fileContent + "\tif len(tableName) == 1 {\n"
 	fileContent = fileContent + "\t\ttable.Table.TableName = tableName[0]\n"
