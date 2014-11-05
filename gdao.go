@@ -17,7 +17,7 @@ import (
 type DbType int32
 
 const (
-	_VER = "1.0.1"
+	_VER = "1.0.2"
 )
 const (
 	_ DbType = iota
@@ -451,6 +451,10 @@ func (t *Table) executeQueryBeen() ([]*GoBeen, error) {
 	return executeQuery_(t.getDB(), t.sql, t.args...)
 }
 
+func Query(db *sql.DB, sql string, args ...interface{}) ([]*GoBeen, error) {
+	return executeQuery_(db, sql, args...)
+}
+
 func ExecuteQuery(sql string, args ...interface{}) ([]*GoBeen, error) {
 	return executeQuery_(db, sql, args...)
 }
@@ -729,6 +733,10 @@ func (f *Field) EQ(arg interface{}) *Where {
 	return &Where{f.FieldName + "=?", arg, nil}
 }
 
+func (f *Field) NEQ(arg interface{}) *Where {
+	return &Where{f.FieldName + "<>?", arg, nil}
+}
+
 func (f *Field) LT(arg interface{}) *Where {
 	return &Where{f.FieldName + "<?", arg, nil}
 }
@@ -839,6 +847,10 @@ func (f *Field) Operation(qurey4SetOperation string) *SetOperation {
 
 func (s *SetOperation) EQ(arg interface{}) *Having {
 	return &Having{s.fieldName + "=?", arg, nil}
+}
+
+func (s *SetOperation) NEQ(arg interface{}) *Having {
+	return &Having{s.fieldName + "<>?", arg, nil}
 }
 
 func (s *SetOperation) LT(arg interface{}) *Having {
@@ -1019,7 +1031,7 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\trows,err := t.Table.Selects(columns...)\n"
 	fileContent = fileContent + "\tdefer rows.Close()\n"
-	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\tif err != nil || rows==nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\tbuff := make([]interface{}, len(columns))\n"
@@ -1041,7 +1053,7 @@ func createFile(table string, columnMap *map[string][2]string, packageName strin
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\trows,err := t.Table.Selects(columns...)\n"
 	fileContent = fileContent + "\tdefer rows.Close()\n"
-	fileContent = fileContent + "\tif err != nil {\n"
+	fileContent = fileContent + "\tif err != nil || rows==nil {\n"
 	fileContent = fileContent + "\t\treturn nil, err\n"
 	fileContent = fileContent + "\t}\n"
 	fileContent = fileContent + "\tns := make([]*" + tableName + ", 0)\n"
