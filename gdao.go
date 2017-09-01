@@ -73,6 +73,9 @@ func (f *FieldBeen) ValueString() string {
 }
 
 func (f *FieldBeen) ValueInt64() int64 {
+	if f.fieldValue == nil {
+		return 0
+	}
 	switch (f.fieldValue).(type) {
 	case int64:
 		return int64((f.fieldValue).(int64))
