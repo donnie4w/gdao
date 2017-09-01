@@ -116,6 +116,9 @@ func (f *FieldBeen) ValueInt16() int16 {
 }
 
 func (f *FieldBeen) ValueFloat64() float64 {
+	if f.fieldValue == nil {
+		return 0
+	}
 	switch (f.fieldValue).(type) {
 	case int64:
 		return float64((f.fieldValue).(int64))
