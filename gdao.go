@@ -467,8 +467,11 @@ func ExecuteQuery(sql string, args ...interface{}) ([]*GoBeen, error) {
 
 func executeQuery_(dbsource *sql.DB, sql string, args ...interface{}) ([]*GoBeen, error) {
 	rows, err := dbsource.Query(sql, args...)
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
-	exception(err)
+	//exception(err)
 	cols, _ := rows.Columns()
 	gb := make([]*GoBeen, 0)
 	for rows.Next() {
