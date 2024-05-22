@@ -3,11 +3,13 @@ package main
 import (
 	"database/sql"
 	//"database/sql/driver"
-	"example/dao"
 	"fmt"
+	"time"
+
+	"github.com/donnie4w/gdao/example/dao"
+
 	"github.com/donnie4w/gdao"
 	_ "github.com/go-sql-driver/mysql"
-	"time"
 )
 
 const (
@@ -42,7 +44,7 @@ func init() {
 	initdb()
 }
 
-//创建表
+// 创建表
 func createTable() {
 	sql := "CREATE TABLE `hstest` ( `id` int(10) NOT NULL DEFAULT '-1' COMMENT 'id',   `name` varchar(20) NOT NULL COMMENT '名字',   `age` int(10) NOT NULL DEFAULT '-1' COMMENT '年龄',   `createtime` datetime NOT NULL DEFAULT '1900-01-01 00:00:00' COMMENT '创建时间', `money` float DEFAULT NULL  ) ENGINE=InnoDB DEFAULT CHARSET=utf8"
 	i, err := gdao.ExecuteUpdate(sql)
@@ -195,7 +197,7 @@ func createDaoTest() {
 	}
 }
 
-//批量生成数据库所有表对应的go文件
+// 批量生成数据库所有表对应的go文件
 func createAllDaoTest() {
 	gbs, _ := gdao.ExecuteQuery("show tables")
 	for _, g := range gbs {
@@ -210,7 +212,7 @@ func createAllDaoTest() {
 	}
 }
 
-//事务测试
+// 事务测试
 func txTest() {
 	tx := gdao.GetTX()
 	tx.Begin()
