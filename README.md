@@ -114,7 +114,9 @@ hs.Insert()
 //[DEBUG][INSERT][insert into hstest(floa, age, value, level, body, rowname, updatetime) values(?,?,?,?,?,?,?)][123456 123 hello123 12345 [104 101 108 108 111] hello1234 2024-07-17 19:36:44]
 ```
 
-### 5. CRUD Operations
+### 5. gdao api
+
+###### CRUD Operations
 
 ```go
 // Query, return single record
@@ -131,7 +133,9 @@ i := gdao.ExecuteUpdate("update hstest set value=? where id=1", "hello")
 i := gdao.ExecuteUpdate("delete from hstest where id = ?", 1)
 ```
 
-### 6. Configure Caching
+### 6. gdaoCache
+
+###### Configure Caching
 
 ```go
 // Bind Hstest to enable caching, cache expiration set to 300 seconds
@@ -159,7 +163,9 @@ hs.Selects()
 [DEBUG][GET CACHE][ select id, age, rowname, value, updatetime, body, floa, level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
 ```
 
-### 7. Read-Write Separation
+### 7. gdaoSlave
+
+###### Read-Write Separation
 
 ```go
 // Set slave data source: mysql
@@ -173,7 +179,9 @@ hs.Limit(3)
 hs.Selects()
 ```
 
-### 8. Use XML to Map SQL
+### 8. gdaoMapper
+
+###### Use XML to Map SQL
 
 ```xml
 <!-- MyBatis style XML configuration file -->

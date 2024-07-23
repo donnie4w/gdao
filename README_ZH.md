@@ -118,7 +118,9 @@ hs.Insert()
 //[DEBUG][INSERT][insert  into hstest(floa,age,value,level,body,rowname,updatetime )values(?,?,?,?,?,?,?)][123456 123 hello123 12345 [104 101 108 108 111] hello1234 2024-07-17 19:36:44]
 ```
 
-### 5. CRUD操作
+### 5. gdao api
+
+###### CRUD操作
 
 ```go
 //查询，返回单条
@@ -135,7 +137,9 @@ int  i = gdao.ExecuteUpdate("update hstest set value=? where id=1", "hello");
 int  i = gdao.ExecuteUpdate("delete from hstest where id = ?", 1);
 ```
 
-### 6. 配置缓存
+### 6. gdaoCache
+
+###### 配置缓存
 
 ```go
 //绑定Hstest  启用缓存, 缓存时效为 300秒
@@ -164,7 +168,9 @@ hs.Selects()
 [DEBUG][GET CACHE][ select id,age,rowname,value,updatetime,body,floa,level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
 ```
 
-### 7. 读写分离
+### 7. gdaoSlave
+
+###### 读写分离
 
 ```go
 设置备库数据源：mysql
@@ -178,7 +184,9 @@ hs.Limit(3)
 hs.Selects()
 ```
 
-### 8. 使用 XML 映射 SQL
+### 8. gdaoMapper
+
+###### 使用 XML 映射 SQL
 
 ```xml
 <!-- MyBatis 风格的 XML 配置文件 -->
