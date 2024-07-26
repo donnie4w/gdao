@@ -18,10 +18,13 @@ type scaner[T any] DataBean
 
 func (s *scaner[T]) Scan() (t *T, err error) {
 	defer Recover(&err)
+	if s == nil {
+		return nil, nil
+	}
 	dataBean := (*DataBean)(s)
 	t = new(T)
 	if scanner, ok := any(t).(Scanner); ok {
-		scanner.New0()
+		scanner.ToGdao()
 		for _, fieldBean := range dataBean.FieldMapName {
 			scanner.Scan(fieldBean.FieldName, fieldBean.Value())
 		}
