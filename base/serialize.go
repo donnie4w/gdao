@@ -24,15 +24,16 @@ type Serializer struct {
 
 func (t *Serializer) Encode(data map[string]interface{}) ([]byte, error) {
 	buf := new(bytes.Buffer)
-
 	for key, value := range data {
+		if key == "" || value == nil {
+			continue
+		}
 		if err := binary.Write(buf, binary.LittleEndian, int8(len(key))); err != nil {
 			return nil, err
 		}
 		if _, err := buf.WriteString(key); err != nil {
 			return nil, err
 		}
-
 		switch v := value.(type) {
 		case bool:
 			if err := binary.Write(buf, binary.LittleEndian, byte(1)); err != nil {
@@ -135,14 +136,16 @@ func (t *Serializer) Encode(data map[string]interface{}) ([]byte, error) {
 				return nil, err
 			}
 		case []byte:
-			if err := binary.Write(buf, binary.LittleEndian, byte(14)); err != nil {
-				return nil, err
-			}
-			if err := binary.Write(buf, binary.LittleEndian, int32(len(v))); err != nil {
-				return nil, err
-			}
-			if _, err := buf.Write(v); err != nil {
-				return nil, err
+			if v != nil {
+				if err := binary.Write(buf, binary.LittleEndian, byte(14)); err != nil {
+					return nil, err
+				}
+				if err := binary.Write(buf, binary.LittleEndian, int32(len(v))); err != nil {
+					return nil, err
+				}
+				if _, err := buf.Write(v); err != nil {
+					return nil, err
+				}
 			}
 		case time.Time:
 			if err := binary.Write(buf, binary.LittleEndian, byte(15)); err != nil {
@@ -268,11 +271,15 @@ func (t *Serializer) Decode(data []byte) (map[string]interface{}, error) {
 			if err := binary.Read(buf, binary.LittleEndian, &valueLen); err != nil {
 				return nil, err
 			}
+
 			value := make([]byte, valueLen)
-			if _, err := buf.Read(value); err != nil {
-				return nil, err
+			if valueLen > 0 {
+				if _, err := buf.Read(value); err != nil {
+					return nil, err
+				}
 			}
 			result[string(key)] = value
+
 		case 15:
 			var timestamp int64
 			if err := binary.Read(buf, binary.LittleEndian, &timestamp); err != nil {
