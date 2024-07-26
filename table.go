@@ -14,7 +14,7 @@ import (
 )
 
 type Table[T any] struct {
-	TableBase[T]
+	GStruct[*T, T]
 	commentline string
 	tableName   string
 	querySql    string
@@ -26,6 +26,7 @@ type Table[T any] struct {
 	limitSql    string
 	sql         string
 	modifymap   map[string]any
+	batchmap    map[string][]any
 	modifySql   string
 	dbhandler   DBhandle
 	transaction Transaction
@@ -33,12 +34,14 @@ type Table[T any] struct {
 	mustMaster  bool
 	isCache     int8
 	classname   string
+	columns     []Column[T]
 }
 
-func (t *Table[T]) Init(s string) {
+func (t *Table[T]) Init(s string, columns []Column[T]) {
 	t.tableName = s
 	t.args = make([]any, 0)
 	t.modifymap = make(map[string]any, 0)
+	t.columns = columns
 }
 
 func (t *Table[T]) IsInit() bool {
@@ -322,6 +325,33 @@ func (t *Table[T]) limit2Adapt(offset, limit int64) {
 
 }
 
+func (t *Table[T]) Selects(columns ...Column[T]) (_r []*T, err error) {
+	if columns == nil {
+		columns = t.columns
+	}
+	var databeans []*DataBean
+	if databeans, err = t.ExecuteQueryBeans(columns...); err == nil && len(databeans) > 0 {
+		_r = make([]*T, 0)
+		for _, bean := range databeans {
+			if r, er := Scan[T](bean); er == nil {
+				_r = append(_r, r)
+			}
+		}
+	}
+	return
+}
+
+func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
+	if columns == nil {
+		columns = t.columns
+	}
+	var bean *DataBean
+	if bean, err = t.ExecuteQueryBean(columns...); err == nil && bean != nil {
+		return Scan[T](bean)
+	}
+	return
+}
+
 func (t *Table[T]) Update() (int64, error) {
 	modifystr := make([]string, 0)
 	args := make([]any, 0)
@@ -374,30 +404,40 @@ func (t *Table[T]) Insert() (int64, error) {
 }
 
 func (t *Table[T]) AddBatch() {
-	insertField := make([]string, 0)
-	insert_ := make([]string, 0)
-	if len(t.batchArgs) == 0 {
-		t.batchArgs = make([][]any, 0)
+	if t.batchmap == nil {
+		t.batchmap = make(map[string][]any, 0)
 	}
-	args := make([]any, 0)
 	for k, v := range t.modifymap {
-		insertField = append(insertField, k)
-		insert_ = append(insert_, "?")
-		args = append(args, v)
+		if list, b := t.batchmap[k]; b {
+			t.batchmap[k] = append(list, v)
+		} else {
+			t.batchmap[k] = []any{v}
+		}
 	}
-	t.sql = " insert  into " + t.tableName + "(" + strings.Join(insertField, ",") + " )values(" + strings.Join(insert_, ",") + ")"
-	for _, v := range t.args {
-		args = append(args, v)
-	}
-	t.batchArgs = append(t.batchArgs, args)
 }
 
 func (t *Table[T]) ExecBatch() ([]int64, error) {
-
+	if len(t.batchmap) == 0 {
+		return []int64{0}, nil
+	}
+	insertField := make([]string, len(t.batchmap))
+	insert_ := make([]string, len(t.batchmap))
+	i := 0
+	for k, v := range t.batchmap {
+		insertField[i] = k
+		insert_[i] = "?"
+		if i == 0 {
+			t.batchArgs = make([][]any, len(v))
+		}
+		for j, c := range v {
+			t.batchArgs[j] = append(t.batchArgs[j], c)
+		}
+		i++
+	}
+	t.sql = " insert  into " + t.tableName + "(" + strings.Join(insertField, ",") + " )values(" + strings.Join(insert_, ",") + ")"
 	if Logger.IsVaild {
 		Logger.Debug("[BATCH]["+t.sql+"]", t.batchArgs)
 	}
-
 	if g := t.getDB(false); g != nil {
 		return g.ExecuteBatch(t.sql, t.batchArgs)
 	} else {
@@ -430,6 +470,10 @@ func (t *Table[T]) Decode(data []byte) (map[string]any, error) {
 	return serialize.Decode(data)
 }
 
-func (t *Table[T]) CommentLine(commentline string) {
+func (t *Table[T]) UseCommentLine(commentline string) {
 	t.commentline = `/*` + commentline + `*/`
+}
+
+func (t *Table[T]) TABLENAME() string {
+	return t.tableName
 }
