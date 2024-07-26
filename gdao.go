@@ -20,17 +20,32 @@ const VERSION = "1.1.0"
 
 var errInit = fmt.Errorf("the gdao DataSource was not initialized(Hint: gdao.Init(db, dbtype))")
 
-type GStruct[T any] interface {
-	Selects(columns ...Column[T]) (_r []*T, err error)
-	Select(columns ...Column[T]) (_r *T, err error)
+type GStruct[P any, T any] interface {
+	Scanner
+	TableBase[T]
+	UseCache(use bool)
+	UseTransaction(transaction Transaction)
+	UseDBHandler(db DBhandle) *Table[T]
+	UseCommentLine(commentline string)
+	MustMaster(must bool)
+	Where(wheres ...*Where[T]) *Table[T]
+	OrderBy(sorts ...*Sort[T]) *Table[T]
+	GroupBy(columns ...Column[T]) *Table[T]
+	Having(havings ...*Having[T]) *Table[T]
+	Limit2(offset, limit int64)
+	Limit(limit int64)
+	Selects(columns ...Column[T]) (_r []P, err error)
+	Select(columns ...Column[T]) (_r P, err error)
+	Update() (int64, error)
+	Insert() (int64, error)
+	Delete() (int64, error)
 	AddBatch()
 	ExecBatch() ([]int64, error)
-	Delete() (int64, error)
-	Insert() (int64, error)
-	Update() (int64, error)
+	Copy(h P) P
 	Encode() ([]byte, error)
 	Decode(bs []byte) (err error)
-	Copy(h *T) *T
+	String() string
+	TABLENAME() string
 }
 
 func NewDBHandler(db *sql.DB, dbtype DBType) DBhandle {
@@ -142,7 +157,7 @@ func NewTransactionWithDBhandle(db DBhandle) (r Transaction, err error) {
 
 type Scanner interface {
 	Scan(fieldname string, value any)
-	New0()
+	ToGdao()
 }
 
 func SetLogger(on bool) {
