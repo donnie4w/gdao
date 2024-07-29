@@ -12,6 +12,8 @@ Gdao is an innovative persistence layer solution aimed at reducing coding worklo
 
 ### [Documentation](https://tlnet.top/gdaodoc)
 
+### [Demo](https://github.com/donnie4w/gdaodemo)
+
 ### Key Features
 
 1. **Code Generation**: Use the Gdao code generation tool to create standardized entity classes for database tables, similar to Thrift/Protobuf.
