@@ -14,6 +14,16 @@ import (
 	"strings"
 )
 
+type Scanner interface {
+	Scan(fieldname string, value any)
+
+	// ToGdao
+	// : when don't create an object by calling a New method of the standardized entity class,
+	// but by using some other method such as the new keyword, then should call the ToGdao function,
+	// which initializes the relevant data for database operations
+	ToGdao()
+}
+
 type scaner[T any] DataBean
 
 func (s *scaner[T]) Scan() (t *T, err error) {
@@ -87,4 +97,15 @@ func (s *scaner[T]) Scan() (t *T, err error) {
 		}
 	}
 	return
+}
+
+func upperFirstLetter(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func Scan[T any](dataBean *DataBean) (t *T, err error) {
+	return (*scaner[T])(dataBean).Scan()
 }
