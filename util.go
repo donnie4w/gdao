@@ -9,9 +9,12 @@ package gdao
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/donnie4w/gdao/base"
 	"strconv"
 )
+
+var errInit = fmt.Errorf("the gdao DataSource was not initialized(Hint: gdao.Init(db, dbtype))")
 
 const (
 	_ base.DBType = iota
@@ -31,6 +34,10 @@ const (
 	NETEZZA
 	VERTICA
 )
+
+func SetLogger(on bool) {
+	base.Logger.SetLogger(on)
+}
 
 func iskey(name string) bool {
 	switch name {
