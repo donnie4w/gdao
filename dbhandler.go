@@ -11,7 +11,6 @@ import (
 	"database/sql"
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoSlave"
-	"strings"
 )
 
 type dbHandler struct {
@@ -56,15 +55,4 @@ func (h *dbHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
 
 func (h *dbHandler) ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error) {
 	return h.gdbc.ExecuteBatch(sqlstr, args)
-}
-
-func Scan[T any](dataBean *DataBean) (t *T, err error) {
-	return (*scaner[T])(dataBean).Scan()
-}
-
-func upperFirstLetter(s string) string {
-	if s == "" {
-		return ""
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
 }
