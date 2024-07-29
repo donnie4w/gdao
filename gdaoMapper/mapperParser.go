@@ -27,7 +27,24 @@ func newMapperParser() *mapperParser {
 	return &mapperParser{mapper: NewMapL[string, *paramBean](), namespaceMapper: NewMapL[string, []string]()}
 }
 
-var mapperparser = newMapperParser()
+var mapperparser *mapperParser
+
+func init() {
+	mapperparser = newMapperParser()
+	base.GetMapperIds = mapperparser.getMapperIds
+	base.HasMapperId = mapperparser.hasMapperId
+}
+
+func (m *mapperParser) getMapperIds(namespace string) []string {
+	if s, ok := m.namespaceMapper.Get(namespace); ok {
+		return s
+	}
+	return nil
+}
+
+func (m *mapperParser) hasMapperId(mapperId string) bool {
+	return m.mapper.Has(mapperId)
+}
 
 func (m *mapperParser) hasMapper() bool {
 	return m.mapper.Len() > 0 || m.namespaceMapper.Len() > 0
@@ -128,7 +145,7 @@ func (m *mapperParser) getParamBean(mapperId string) (*paramBean, bool) {
 
 func (m *mapperParser) namespaceMapperAdd(namespace, id string) {
 	if ids, _ := m.namespaceMapper.Get(namespace); ids != nil {
-		ids = append(ids, id)
+		m.namespaceMapper.Put(namespace, append(ids, id))
 	} else {
 		m.namespaceMapper.Put(namespace, []string{id})
 	}
@@ -136,7 +153,6 @@ func (m *mapperParser) namespaceMapperAdd(namespace, id string) {
 
 func Builder(xmlpath string) {
 	mapperparser.parser(xmlpath)
-	defaultMapperHandler = newMapperHandler()
 }
 
 type paramBean struct {
