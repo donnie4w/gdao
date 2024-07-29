@@ -9,6 +9,7 @@ package gdaoSlave
 
 import (
 	"database/sql"
+	"fmt"
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/util"
@@ -25,60 +26,128 @@ var defaultSlaveHandler *slaveHandler
 func init() {
 	defaultSlaveHandler = newSlaveHandler()
 	Len = defaultSlaveHandler.len
-	BindWithDBhandle = defaultSlaveHandler.addWithDBhandle
-	Bind = defaultSlaveHandler.add
-	BindMapper = defaultSlaveHandler.addMapper
-	BindMapperWithDBhandle = defaultSlaveHandler.addMapperWithDBhandle
-	Remove = defaultSlaveHandler.remove
-	RemoveMapper = defaultSlaveHandler.removeMapper
+	BindTableWithDBhandle = defaultSlaveHandler.bindTableWithDBhandle
+	BindTable = defaultSlaveHandler.bindTable
+	UnbindTable = defaultSlaveHandler.unbindTable
+
+	BindMapper = defaultSlaveHandler.bindMapper
+	BindMapperWithDBhandle = defaultSlaveHandler.bindMapperWithDBhandle
+	UnbindMapper = defaultSlaveHandler.unbindMapper
+
+	BindMapperId = defaultSlaveHandler.bindMapperId
+	BindMapperIdWithDBhandle = defaultSlaveHandler.bindMapperIdWithDBhandle
+	UnbindMapperId = defaultSlaveHandler.unbindMapperId
+
 	Len = defaultSlaveHandler.len
 	Get = defaultSlaveHandler.get
+	GetMapper = defaultSlaveHandler.getMapper
 }
 
 func newSlaveHandler() *slaveHandler {
 	return &slaveHandler{slavemap: hashmap.NewMapL[string, []DBhandle](), mutex: &sync.Mutex{}}
 }
 
-func (t *slaveHandler) add(tableName string, db *sql.DB, dbtype DBType) {
-	t.addWithDBhandle(tableName, Newdbhandle(db, dbtype))
+var err_no_mapperid = fmt.Errorf("mapper binding error: no valid mapping id could be found")
+
+func (t *slaveHandler) bind(s string, db *sql.DB, dbtype DBType) {
+	t.bindWithDBhandle(s, Newdbhandle(db, dbtype))
 }
 
-func (t *slaveHandler) addWithDBhandle(tableName string, dbHandle DBhandle) {
+func (t *slaveHandler) bindWithDBhandle(s string, dbHandle DBhandle) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	if dblist, ok := t.slavemap.Get(tableName); ok {
-		dblist = append(dblist, dbHandle)
-		t.slavemap.Put(tableName, dblist)
+	if dblist, ok := t.slavemap.Get(s); ok {
+		t.slavemap.Put(s, append(dblist, dbHandle))
 	} else {
-		t.slavemap.Put(tableName, []DBhandle{dbHandle})
+		t.slavemap.Put(s, []DBhandle{dbHandle})
 	}
 }
 
-func (t *slaveHandler) addMapper(mapperId string, db *sql.DB, dbtype DBType) {
-	t.add(Pre+mapperId, db, dbtype)
+func (t *slaveHandler) bindTable(db *sql.DB, dbtype DBType, tableNames ...string) {
+	t.bindTableWithDBhandle(Newdbhandle(db, dbtype), tableNames...)
 }
 
-func (t *slaveHandler) addMapperWithDBhandle(mapperId string, dbHandle DBhandle) {
-	t.addWithDBhandle(Pre+mapperId, dbHandle)
+func (t *slaveHandler) bindTableWithDBhandle(dbHandle DBhandle, tableNames ...string) {
+	for _, tableName := range tableNames {
+		t.bindWithDBhandle(tableName, dbHandle)
+	}
 }
 
-func (t *slaveHandler) remove(tableName string) bool {
+func (t *slaveHandler) unbindTable(tableNames ...string) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	return t.slavemap.Del(tableName)
+	for _, tableName := range tableNames {
+		t.slavemap.Del(tableName)
+	}
 }
 
-func (t *slaveHandler) removeMapper(mapperId string) bool {
-	t.mutex.Lock()
-	defer t.mutex.Unlock()
-	return t.slavemap.Del(Pre + mapperId)
+func (t *slaveHandler) bindMapper(namespace string, db *sql.DB, dbtype DBType) error {
+	return t.bindMapperWithDBhandle(namespace, Newdbhandle(db, dbtype))
+}
+
+func (t *slaveHandler) bindMapperWithDBhandle(namespace string, dbHandle DBhandle) error {
+	ids := GetMapperIds(namespace)
+	if len(ids) == 0 {
+		return err_no_mapperid
+	} else {
+		for _, id := range ids {
+			t.bindWithDBhandle(mapperId(namespace, id), dbHandle)
+		}
+	}
+	return nil
+}
+
+func (t *slaveHandler) bindMapperId(namespace, id string, db *sql.DB, dbtype DBType) error {
+	return t.bindMapperIdWithDBhandle(namespace, id, Newdbhandle(db, dbtype))
+}
+
+func (t *slaveHandler) bindMapperIdWithDBhandle(namespace, id string, dbHandle DBhandle) error {
+	if !HasMapperId(namespace + "." + id) {
+		return err_no_mapperid
+	}
+	t.bindWithDBhandle(mapperId(namespace, id), dbHandle)
+	return nil
+}
+
+func (t *slaveHandler) unbindMapper(namespace string) error {
+	ids := GetMapperIds(namespace)
+	if len(ids) == 0 {
+		return err_no_mapperid
+	} else {
+		for _, id := range ids {
+			t.slavemap.Del(mapperId(namespace, id))
+		}
+	}
+	return nil
+}
+
+func (t *slaveHandler) unbindMapperId(namespace, id string) error {
+	if !HasMapperId(namespace + "." + id) {
+		return err_no_mapperid
+	}
+	t.slavemap.Del(mapperId(namespace, id))
+	return nil
 }
 
 func (t *slaveHandler) len() int64 {
 	return t.slavemap.Len()
 }
 
-func (t *slaveHandler) get(classname, tableName, mapperId string) DBhandle {
+func (t *slaveHandler) getMapper(namespace, id string) DBhandle {
+	if namespace != "" && id != "" {
+		dblist, _ := t.slavemap.Get(mapperId(namespace, id))
+		if length := len(dblist); length > 0 {
+			if length == 1 {
+				return dblist[0]
+			} else if length > 1 {
+				return dblist[util.Rand(int(t.len()))]
+			}
+		}
+	}
+	return nil
+}
+
+func (t *slaveHandler) get(classname, tableName string) DBhandle {
 	var dblist []DBhandle
 
 	if classname != "" {
@@ -87,10 +156,6 @@ func (t *slaveHandler) get(classname, tableName, mapperId string) DBhandle {
 
 	if len(dblist) == 0 && tableName != "" {
 		dblist, _ = t.slavemap.Get(tableName)
-	}
-
-	if len(dblist) == 0 && mapperId != "" {
-		dblist, _ = t.slavemap.Get(Pre + mapperId)
 	}
 
 	if length := len(dblist); length > 0 {
@@ -104,3 +169,7 @@ func (t *slaveHandler) get(classname, tableName, mapperId string) DBhandle {
 }
 
 var Newdbhandle func(db *sql.DB, dbtype DBType) DBhandle
+
+func mapperId(namespace, id string) string {
+	return MapperPre + namespace + "." + id
+}
