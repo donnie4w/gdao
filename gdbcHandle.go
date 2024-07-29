@@ -62,3 +62,53 @@ func (g *gdbcHandler) ExecuteBatch(sqlstr string, args [][]any) ([]int64, error)
 func (g *gdbcHandler) Close() error {
 	return g.DB.Close()
 }
+
+func ExecuteQuery[T any](sql string, args ...any) (r *T, err error) {
+	if databean, err := defaultDBhandle.ExecuteQueryBean(sql, args...); err == nil {
+		return Scan[T](databean)
+	} else {
+		return nil, err
+	}
+}
+
+func ExecuteQueryList[T any](sql string, args ...any) (r []*T, err error) {
+	var databeans []*base.DataBean
+	if databeans, err = defaultDBhandle.ExecuteQueryBeans(sql, args...); err == nil && len(databeans) > 0 {
+		r = make([]*T, 0)
+		for _, databean := range databeans {
+			var t *T
+			if t, err = Scan[T](databean); err == nil {
+				r = append(r, t)
+			}
+		}
+	}
+	return
+}
+
+func ExecuteQueryBean(sql string, args ...any) (*base.DataBean, error) {
+	if defaultDBhandle == nil {
+		return nil, errInit
+	}
+	return defaultDBhandle.ExecuteQueryBean(sql, args...)
+}
+
+func ExecuteQueryBeans(sql string, args ...any) ([]*base.DataBean, error) {
+	if defaultDBhandle == nil {
+		return nil, errInit
+	}
+	return defaultDBhandle.ExecuteQueryBeans(sql, args...)
+}
+
+func ExecuteUpdate(sql string, args ...any) (int64, error) {
+	if defaultDBhandle == nil {
+		return 0, errInit
+	}
+	return defaultDBhandle.ExecuteUpdate(sql, args...)
+}
+
+func ExecuteBatch(sql string, args [][]any) ([]int64, error) {
+	if defaultDBhandle == nil {
+		return nil, errInit
+	}
+	return defaultDBhandle.ExecuteBatch(sql, args)
+}
