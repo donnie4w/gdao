@@ -40,7 +40,7 @@ func Recover(errp *error) {
 	}
 }
 
-var Pre = string(util.Int64ToBytes(util.RandId()))
+var MapperPre = string(util.Base58EncodeForInt64(uint64(util.RandId())))
 
 func Classname[T any]() string {
 	var t T
@@ -90,3 +90,9 @@ func NewInOut(v any) InOut {
 func (t InOut) GetValue() *sql.Out {
 	return &sql.Out{Dest: t.Value, In: true}
 }
+
+var (
+	GetMapperIds      func(string) []string
+	HasMapperId       func(string) bool
+	GetMapperDBhandle func(string, string, bool) DBhandle
+)
