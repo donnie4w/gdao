@@ -15,7 +15,6 @@ import (
 type DataBean struct {
 	FieldMapName  map[string]*FieldBeen
 	FieldMapIndex map[int]*FieldBeen
-	length        int
 }
 
 func NewDataBean() *DataBean {
@@ -32,7 +31,6 @@ func (g *DataBean) Map() map[string]*FieldBeen {
 func (g *DataBean) Put(name string, index int, fb *FieldBeen) {
 	g.FieldMapName[name] = fb
 	g.FieldMapIndex[index] = fb
-	g.length++
 }
 
 func (g *DataBean) FieldByName(name string) (_r *FieldBeen) {
@@ -72,5 +70,5 @@ func (g *DataBean) String() (r string) {
 }
 
 func (g *DataBean) Len() int {
-	return g.length
+	return len(g.FieldMapName)
 }
