@@ -8,158 +8,82 @@
 package gdao
 
 import (
-	"database/sql"
-	"fmt"
-	"github.com/donnie4w/gdao/gdaoSlave"
-
 	. "github.com/donnie4w/gdao/base"
-	"github.com/donnie4w/gofer/hashmap"
 )
 
 const VERSION = "1.1.0"
 
-var errInit = fmt.Errorf("the gdao DataSource was not initialized(Hint: gdao.Init(db, dbtype))")
-
 type GStruct[P any, T any] interface {
 	Scanner
 	TableBase[T]
+
+	// UseCache use default gdaoCache or not use cache
 	UseCache(use bool)
+
+	// UseTransaction use specified transaction
 	UseTransaction(transaction Transaction)
-	UseDBHandler(db DBhandle) *Table[T]
+
+	// UseDBHandle use specified DBhandle
+	UseDBHandle(db DBhandle) *Table[T]
+
+	// UseCommentLine set annotations for sql
 	UseCommentLine(commentline string)
+
 	MustMaster(must bool)
+
+	// Where adds a WHERE clause to the query with one or more conditions.
+	//
+	// Parameters:
+	//
+	//	wheres: Variable length argument list of *Where[T] objects representing the conditions to add to the WHERE clause.
+	//
+	// Returns:
+	//
+	//	A pointer to the Table[T] instance to allow method chaining.
+	//
+	// Description:
+	//
+	//	This function allows you to specify one or more conditions that will be added to the WHERE clause of the SQL query.
+	//	Each *Where[T] object represents a condition that must be satisfied by the rows returned by the query.
+	//	Multiple conditions can be combined to form complex queries.
+	//
+	// Example:
+	//
+	//	// Assuming "hs" is an instance of a Table struct that represents a table named "hstest"
+	//	// And "Rowname" and "Id" are columns in the "hstest" table
+	//	hs := dao.NewHstest()
+	//	hs = hs.Where(hs.Rowname.RLIKE(1)).GroupBy(hs.Id).Having(hs.Id.Count().LT(2)).Limit(2)
+	//	hslist, _ := hs.Selects()
 	Where(wheres ...*Where[T]) *Table[T]
+	// OrderBy sql: order by
 	OrderBy(sorts ...*Sort[T]) *Table[T]
+	// GroupBy sql: group by
 	GroupBy(columns ...Column[T]) *Table[T]
+	// Having sql: having
 	Having(havings ...*Having[T]) *Table[T]
 	Limit2(offset, limit int64)
 	Limit(limit int64)
+	// Selects sql:select from table and Return data slice
 	Selects(columns ...Column[T]) (_r []P, err error)
+	// Select sql:select from table and Return first data
 	Select(columns ...Column[T]) (_r P, err error)
+	// Update sql: update
 	Update() (int64, error)
+	// Insert sql: insert
 	Insert() (int64, error)
+	// Delete sql: delete
 	Delete() (int64, error)
+	// AddBatch sql: add data to batch sql
 	AddBatch()
+	// ExecBatch sql:database batch operation
 	ExecBatch() ([]int64, error)
+	//Copy object data
 	Copy(h P) P
+	// Encode Serialized object
 	Encode() ([]byte, error)
+	// Decode deserialization
 	Decode(bs []byte) (err error)
 	String() string
+	// TABLENAME return table name
 	TABLENAME() string
-}
-
-func NewDBHandler(db *sql.DB, dbtype DBType) DBhandle {
-	return newdbhandle(db, dbtype)
-}
-
-func GetDefaultDBHandle() DBhandle {
-	return defaultDBhandle
-}
-
-func ExecuteQuery[T any](sql string, args ...any) (r *T, err error) {
-	if databean, err := defaultDBhandle.ExecuteQueryBean(sql, args...); err == nil {
-		return Scan[T](databean)
-	} else {
-		return nil, err
-	}
-}
-
-func ExecuteQueryList[T any](sql string, args ...any) (r []*T, err error) {
-	var databeans []*DataBean
-	if databeans, err = defaultDBhandle.ExecuteQueryBeans(sql, args...); err == nil && len(databeans) > 0 {
-		r = make([]*T, 0)
-		for _, databean := range databeans {
-			var t *T
-			if t, err = Scan[T](databean); err == nil {
-				r = append(r, t)
-			}
-		}
-	}
-	return
-}
-
-func ExecuteQueryBean(sql string, args ...any) (*DataBean, error) {
-	if defaultDBhandle == nil {
-		return nil, errInit
-	}
-	return defaultDBhandle.ExecuteQueryBean(sql, args...)
-}
-
-func ExecuteQueryBeans(sql string, args ...any) ([]*DataBean, error) {
-	if defaultDBhandle == nil {
-		return nil, errInit
-	}
-	return defaultDBhandle.ExecuteQueryBeans(sql, args...)
-}
-
-func ExecuteUpdate(sql string, args ...any) (int64, error) {
-	if defaultDBhandle == nil {
-		return 0, errInit
-	}
-	return defaultDBhandle.ExecuteUpdate(sql, args...)
-}
-
-func ExecuteBatch(sql string, args [][]any) ([]int64, error) {
-	if defaultDBhandle == nil {
-		return nil, errInit
-	}
-	return defaultDBhandle.ExecuteBatch(sql, args)
-}
-
-func getDBhandle(classname, tableName string, queryType bool) (r DBhandle) {
-	if gdaoSlave.Len() > 0 && queryType {
-		if r = gdaoSlave.Get(classname, tableName, ""); r != nil {
-			return
-		}
-	}
-	if handleMap.Len() > 0 {
-		if h, ok := handleMap.Get(classname); ok {
-			return h
-		}
-		if h, ok := handleMap.Get(tableName); ok {
-			return h
-		}
-	}
-	return defaultDBhandle
-}
-
-var defaultDBhandle DBhandle
-
-var handleMap = hashmap.MapL[string, DBhandle]{}
-
-func Init(db *sql.DB, dbtype DBType) {
-	defaultDBhandle = newdbhandle(db, dbtype)
-}
-
-func SetDataSource(tableName string, db *sql.DB, dbtype DBType) {
-	handleMap.Put(tableName, newdbhandle(db, dbtype))
-}
-
-func SetDataSourceWithClass[T TableBase[T]](db *sql.DB, dbtype DBType) {
-	handleMap.Put(Classname[T](), newdbhandle(db, dbtype))
-}
-
-func RemoveDataSource(tableName string) {
-	handleMap.Del(tableName)
-}
-
-func RemoveDataSourceWithClass[T TableBase[T]]() {
-	handleMap.Del(Classname[T]())
-}
-
-func NewTransaction() (r Transaction, err error) {
-	return newTX(defaultDBhandle)
-}
-
-func NewTransactionWithDBhandle(db DBhandle) (r Transaction, err error) {
-	return newTX(db)
-}
-
-type Scanner interface {
-	Scan(fieldname string, value any)
-	ToGdao()
-}
-
-func SetLogger(on bool) {
-	Logger.SetLogger(on)
 }
