@@ -11,6 +11,8 @@ Gdao是一种创新的持久层解决方案。主要目的在于 减少编程量
 
 ### [使用文档](https://tlnet.top/gdaodoc)
 
+### [Demo](https://github.com/donnie4w/gdaodemo)
+
 ### 主要特点
 
 1. **生成代码**：运行gdao代码生成工具，创建数据库表的标准化实体类。类似thrift/protobuf。
