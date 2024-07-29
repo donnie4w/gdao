@@ -9,6 +9,7 @@ package gdaoCache
 
 import (
 	"fmt"
+	"github.com/donnie4w/gdao/base"
 	. "github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/util"
 	"hash/fnv"
@@ -70,6 +71,13 @@ func (s *SqlKV) hash() uint64 {
 	return h.Sum64()
 }
 
+type storeMode uint8
+
+const (
+	STRONG storeMode = 1
+	SOFT   storeMode = 2
+)
+
 type CacheBean struct {
 	timestamp int64
 	value     any
@@ -92,32 +100,44 @@ func (c *Condition) hash() uint64 {
 }
 
 type CacheHandle struct {
-	mm     *Map[string, *Map[uint64, *CacheBean]]
-	domain string
-	expire int64
+	mm        *Map[string, *Map[uint64, *CacheBean]]
+	domain    string
+	expire    int64
+	storemode storeMode
 }
 
-func newCacheHandle() *CacheHandle {
+func NewCacheHandle() *CacheHandle {
 	domain := string(util.Base58EncodeForInt64(uint64(util.RandId())))
 	expire := int64(5 * 60 * 1000)
-	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire}
+	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire, storemode: SOFT}
 }
 
-func NewCacheHandleWithDomain(domain string) *CacheHandle {
-	expire := int64(5 * 60 * 1000)
-	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire}
+// SetDomain set the domain of cacheHandle
+func (c *CacheHandle) SetDomain(domain string) *CacheHandle {
+	c.domain = domain
+	return c
 }
 
-func NewCacheHandleWithExpire(expire int64) *CacheHandle {
+// SetExpire set the data validity period in milliseconds.The default is 300*1000
+func (c *CacheHandle) SetExpire(expire int64) *CacheHandle {
+	c.expire = expire
+	return c
+}
+
+// SetStoreMode set the storage mode. The default is SOFT
+func (c *CacheHandle) SetStoreMode(mode storeMode) *CacheHandle {
+	c.storemode = mode
+	return c
+}
+
+func NewCacheHandle2(expire int64, mode storeMode) *CacheHandle {
 	domain := string(util.Base58EncodeForInt64(uint64(util.RandId())))
-	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire}
+	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire, storemode: mode}
 }
 
-func NewCacheHandle(domain string, expire int64) *CacheHandle {
-	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire}
-}
+var defaultCacheHandle = NewCacheHandle()
 
-var defaultCacheHandle = newCacheHandle()
+var err_no_mapperid = fmt.Errorf("mapper binding error: no valid mapping id could be found")
 
 type cacher struct {
 	cacheMap *Map[string, *CacheHandle]
@@ -141,21 +161,66 @@ func (c *cacher) BindWithCacheHandle(tablename string, cacheHandle *CacheHandle)
 	c.cacheMap.Put(cacheHandle.domain, cacheHandle)
 }
 
-func (c *cacher) Remove(tablename string) {
+func (c *cacher) Unbind(tablename string) {
 	c.rmap.Del(tablename)
 }
 
-func (c *cacher) BindMapper(mapperId string) {
-	c.rmap.Put(mapperId, defaultCacheHandle.domain)
+func (c *cacher) BindMapper(namespace string) error {
+	ids := base.GetMapperIds(namespace)
+	if len(ids) == 0 {
+		return err_no_mapperid
+	} else {
+		for _, id := range ids {
+			c.BindMapperId(namespace, id)
+		}
+	}
+	return nil
 }
 
-func (c *cacher) BindMapperWithCacheHandle(mapperId string, cacheHandle *CacheHandle) {
-	c.rmap.Put(mapperId, cacheHandle.domain)
+func (c *cacher) BindMapperWithCacheHandle(namespace string, cacheHandle *CacheHandle) error {
+	ids := base.GetMapperIds(namespace)
+	if len(ids) == 0 {
+		return err_no_mapperid
+	} else {
+		for _, id := range ids {
+			c.BindMapperIdWithCacheHandle(namespace, id, cacheHandle)
+		}
+	}
+	return nil
+}
+
+func (c *cacher) UnbindMapper(namespace string) {
+	ids := base.GetMapperIds(namespace)
+	if len(ids) > 0 {
+		for _, id := range ids {
+			c.UnbindMapperId(namespace, id)
+		}
+	}
+}
+
+func (c *cacher) BindMapperId(namespace, id string) error {
+	if !base.HasMapperId(namespace + "." + id) {
+		return err_no_mapperid
+	}
+	c.rmap.Put(mapperId(namespace, id), defaultCacheHandle.domain)
+	return nil
+}
+
+func (c *cacher) BindMapperIdWithCacheHandle(namespace, id string, cacheHandle *CacheHandle) error {
+	if !base.HasMapperId(namespace + "." + id) {
+		return err_no_mapperid
+	}
+	c.rmap.Put(mapperId(namespace, id), cacheHandle.domain)
 	c.cacheMap.Put(cacheHandle.domain, cacheHandle)
+	return nil
 }
 
-func (c *cacher) RemoveMapper(mapperId string) {
-	c.rmap.Del(mapperId)
+func (c *cacher) UnbindMapperId(namespace, id string) {
+	c.rmap.Del(mapperId(namespace, id))
+}
+
+func (c *cacher) GetMapperCache(domain, namepace, id string, condition *Condition) any {
+	return c.GetCache(domain, mapperId(namepace, id), condition)
 }
 
 func (c *cacher) GetCache(domain, cacheId string, condition *Condition) any {
@@ -180,6 +245,10 @@ func (c *cacher) GetCache(domain, cacheId string, condition *Condition) any {
 	return nil
 }
 
+func (c *cacher) SetMapperCache(domain string, namespace, id string, condition *Condition, value any) bool {
+	return c.SetCache(domain, mapperId(namespace, id), condition, value)
+}
+
 func (c *cacher) SetCache(domain string, cacheId string, condition *Condition, value any) bool {
 	if cacheId == "" || condition == nil || value == nil {
 		return false
@@ -201,6 +270,8 @@ func (c *cacher) SetCache(domain string, cacheId string, condition *Condition, v
 	return true
 }
 
+var memorymonitor = newMemoryMonitor(0.9, 3*time.Second, 1)
+
 func (c *cacher) ticker() {
 	tk := time.NewTicker(10 * time.Second)
 	for {
@@ -208,10 +279,11 @@ func (c *cacher) ticker() {
 			defer func() { recover() }()
 			select {
 			case <-tk.C:
+				b := memorymonitor.CheckMemoryPressure()
 				c.cacheMap.Range(func(domain string, cachehandle *CacheHandle) bool {
 					cachehandle.mm.Range(func(cacheId string, cacheBeanMap *Map[uint64, *CacheBean]) bool {
 						cacheBeanMap.Range(func(condition uint64, cb *CacheBean) bool {
-							if time.Now().UnixMilli()-cachehandle.expire-cb.timestamp > 0 {
+							if (b && cachehandle.storemode == SOFT) || time.Now().UnixMilli()-cachehandle.expire-cb.timestamp > 0 {
 								cacheBeanMap.Del(condition)
 							}
 							return true
@@ -225,9 +297,23 @@ func (c *cacher) ticker() {
 	}
 }
 
-func (c *cacher) GetDomain(cacheId string) string {
-	if domain, b := c.rmap.Get(cacheId); b {
+func (c *cacher) GetDomain(classname, tablename string) string {
+	if domain, b := c.rmap.Get(classname); b {
+		return domain
+	}
+	if domain, b := c.rmap.Get(tablename); b {
 		return domain
 	}
 	return ""
+}
+
+func (c *cacher) GetMapperDomain(namespace, id string) string {
+	if domain, b := c.rmap.Get(mapperId(namespace, id)); b {
+		return domain
+	}
+	return ""
+}
+
+func mapperId(namespace, id string) string {
+	return base.MapperPre + namespace + "." + id
 }
