@@ -71,3 +71,11 @@ func (x *tx) ExecuteQueryBeans(sqlstr string, args ...any) ([]*DataBean, error) 
 func (x *tx) ExecuteQueryBean(sqlstr string, args ...any) (*DataBean, error) {
 	return x.gdbc.ExecuteQueryBean(sqlstr, args...)
 }
+
+func NewTransaction() (r Transaction, err error) {
+	return newTX(defaultDBhandle)
+}
+
+func NewTransactionWithDBhandle(db DBhandle) (r Transaction, err error) {
+	return newTX(db)
+}
