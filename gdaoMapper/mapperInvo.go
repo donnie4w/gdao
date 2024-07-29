@@ -29,7 +29,7 @@ func (m *mapperInvoke[T]) Select(mapperId string, args ...any) (r *T, er error) 
 				return
 			}
 		} else {
-			if r, err = gdao.Scan[T](databean); err != nil || r == nil {
+			if r, er = gdao.Scan[T](databean); er != nil || r == nil {
 				r, er = toT[T](databean)
 			}
 		}
@@ -86,7 +86,7 @@ func (m *mapperInvoke[T]) Selects(mapperId string, args ...any) (r []*T, er erro
 		} else {
 			ok := true
 			for _, databean := range databeans {
-				if v, _ := gdao.Scan[T](databean); v != nil {
+				if v, err := gdao.Scan[T](databean); err == nil && v != nil {
 					r = append(r, v)
 				} else {
 					ok = false
@@ -131,7 +131,7 @@ func (m *mapperInvoke[T]) SelectsAny(mapperId string, parameter any) (r []*T, er
 		} else {
 			ok := true
 			for _, databean := range databeans {
-				if v, _ := gdao.Scan[T](databean); v != nil {
+				if v, err := gdao.Scan[T](databean); err == nil && v != nil {
 					r = append(r, v)
 				} else {
 					ok = false
@@ -193,6 +193,8 @@ func toT[T any](databean *base.DataBean) (r *T, err error) {
 		value := reflect.ValueOf(v).Convert(reflect.TypeOf(t))
 		result := value.Interface().(T)
 		return &result, nil
+	} else {
+		err = fmt.Errorf("value:%v ,type %v cannot be converted to type %v", field.Value(), reflect.TypeOf(field.Value()), reflect.TypeOf(t))
 	}
 	return
 }
