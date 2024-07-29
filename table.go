@@ -63,6 +63,29 @@ func (t *Table[T]) UseCache(use bool) {
 func (t Table[T]) ClassName() {
 }
 
+// Where adds a WHERE clause to the query with one or more conditions.
+//
+// Parameters:
+//
+//	wheres: Variable length argument list of *Where[T] objects representing the conditions to add to the WHERE clause.
+//
+// Returns:
+//
+//	A pointer to the Table[T] instance to allow method chaining.
+//
+// Description:
+//
+//	This function allows you to specify one or more conditions that will be added to the WHERE clause of the SQL query.
+//	Each *Where[T] object represents a condition that must be satisfied by the rows returned by the query.
+//	Multiple conditions can be combined to form complex queries.
+//
+// Example:
+//
+//	// Assuming "hs" is an instance of a Table struct that represents a table named "hstest"
+//	// And "Rowname" and "Id" are columns in the "hstest" table
+//	hs := dao.NewHstest()
+//	hs = hs.Where(hs.Rowname.RLIKE(1)).GroupBy(hs.Id).Having(hs.Id.Count().LT(2)).Limit(2)
+//	hslist, _ := hs.Selects()
 func (t *Table[T]) Where(wheres ...*Where[T]) *Table[T] {
 	whereSqls := make([]string, len(wheres))
 	for i, w := range wheres {
@@ -90,12 +113,12 @@ func (t *Table[T]) MustMaster(must bool) {
 	t.mustMaster = must
 }
 
-func (t *Table[T]) UseDBHandler(db DBhandle) *Table[T] {
+func (t *Table[T]) UseDBHandle(db DBhandle) *Table[T] {
 	t.dbhandler = db
 	return t
 }
 
-func (t *Table[T]) ExecuteQueryBeans(columns ...Column[T]) ([]*DataBean, error) {
+func (t *Table[T]) executeQueryBeans(columns ...Column[T]) ([]*DataBean, error) {
 	t.completeSql4Columns(columns...)
 	t.completeSql4Query()
 
@@ -105,7 +128,7 @@ func (t *Table[T]) ExecuteQueryBeans(columns ...Column[T]) ([]*DataBean, error) 
 	if t.classname == "" {
 		t.classname = Classname[T]()
 	}
-	domain := gdaoCache.GetDomain(t.classname)
+	domain := gdaoCache.GetDomain(t.classname, t.tableName)
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
 	var condition *gdaoCache.Condition
 	if iscache {
@@ -135,7 +158,7 @@ func (t *Table[T]) ExecuteQueryBeans(columns ...Column[T]) ([]*DataBean, error) 
 	}
 }
 
-func (t *Table[T]) ExecuteQueryBean(columns ...Column[T]) (*DataBean, error) {
+func (t *Table[T]) executeQueryBean(columns ...Column[T]) (*DataBean, error) {
 	t.completeSql4Columns(columns...)
 	t.completeSql4Query()
 
@@ -145,7 +168,7 @@ func (t *Table[T]) ExecuteQueryBean(columns ...Column[T]) (*DataBean, error) {
 	if t.classname == "" {
 		t.classname = Classname[T]()
 	}
-	domain := gdaoCache.GetDomain(t.classname)
+	domain := gdaoCache.GetDomain(t.classname, t.tableName)
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
 	var condition *gdaoCache.Condition
 	if iscache {
@@ -330,7 +353,7 @@ func (t *Table[T]) Selects(columns ...Column[T]) (_r []*T, err error) {
 		columns = t.columns
 	}
 	var databeans []*DataBean
-	if databeans, err = t.ExecuteQueryBeans(columns...); err == nil && len(databeans) > 0 {
+	if databeans, err = t.executeQueryBeans(columns...); err == nil && len(databeans) > 0 {
 		_r = make([]*T, 0)
 		for _, bean := range databeans {
 			if r, er := Scan[T](bean); er == nil {
@@ -346,7 +369,7 @@ func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
 		columns = t.columns
 	}
 	var bean *DataBean
-	if bean, err = t.ExecuteQueryBean(columns...); err == nil && bean != nil {
+	if bean, err = t.executeQueryBean(columns...); err == nil && bean != nil {
 		return Scan[T](bean)
 	}
 	return
