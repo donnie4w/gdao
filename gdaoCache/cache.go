@@ -23,12 +23,26 @@ func UnbindClass[T base.TableBase[T]]() {
 	gdaocache.Unbind(base.Classname[T]())
 }
 
+// BindTableNames binds one or more table names to enable the gdao caching mechanism for data operations on these tables.
+// Parameters:
+//
+//	tableNames: A variadic list of strings representing the names of the tables to bind.
+//
+// The function configures the caching system to recognize and cache data operations for the specified tables.
 func BindTableNames(tableNames ...string) {
 	for _, tablename := range tableNames {
 		gdaocache.Bind(tablename)
 	}
 }
 
+// BindTableNamesWithCacheHandle binds one or more table names with a CacheHandle to enable the gdao caching mechanism for data operations on these tables.
+// This function is useful when you want to enable caching for specific tables in your application with custom cache settings.
+// Parameters:
+//
+//	cacheHandle: A pointer to a CacheHandle object that defines the caching behavior such as expiration time and eviction policies.
+//	tableNames: A variadic list of strings representing the names of the tables to bind.
+//
+// The function configures the caching system to recognize and cache data operations for the specified tables with the provided cache settings.
 func BindTableNamesWithCacheHandle(cacheHandle *CacheHandle, tableNames ...string) {
 	for _, tablename := range tableNames {
 		gdaocache.BindWithCacheHandle(tablename, cacheHandle)
