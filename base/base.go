@@ -14,6 +14,8 @@ import (
 	"reflect"
 )
 
+const VERSION = "1.1.0"
+
 type TableBase[T any] interface {
 	ClassName()
 }
