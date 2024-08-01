@@ -256,7 +256,8 @@ func (t *mapperHandler) parseParameter(mapperId string, parameter any) (pb *para
 
 var defaultMapperHandler *mapperHandler
 
-func NewInstance() JdaoMapper {
+// NewInstance create a GdaoMapper Object
+func NewInstance() GdaoMapper {
 	return newMapperHandler()
 }
 
