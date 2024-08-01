@@ -307,7 +307,7 @@ func (t *Table[T]) limitAdapt(limit int64) {
 		t.limitSql = " OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY "
 	case ORACLE:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
-	case NETEZZA, GREENPLUM, POSTGRESQL:
+	case NETEZZA, GREENPLUM, POSTGRESQL, OPENGAUSS:
 		t.limitSql = " LIMIT ? OFFSET 0 "
 	case DB2:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
@@ -315,7 +315,7 @@ func (t *Table[T]) limitAdapt(limit int64) {
 		t.limitSql = ""
 	case DERBY:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
-	case INGRES, VERTICA, MYSQL, MARIADB, SQLITE:
+	case INGRES, VERTICA, MYSQL, MARIADB, SQLITE, TIDB, OCEANBASE:
 		t.limitSql = " LIMIT ? "
 	default:
 		t.limitSql = ""
@@ -327,7 +327,7 @@ func (t *Table[T]) limitAdapt(limit int64) {
 
 func (t *Table[T]) limit2Adapt(offset, limit int64) {
 	switch t.getDB(true).GetDBType() {
-	case POSTGRESQL, GREENPLUM:
+	case POSTGRESQL, GREENPLUM, OPENGAUSS:
 		t.limitSql = " OFFSET ? LIMIT ? "
 		t.args = append(t.args, offset, limit)
 	case ORACLE, SQLSERVER:
@@ -341,7 +341,7 @@ func (t *Table[T]) limit2Adapt(offset, limit int64) {
 		t.args = append(t.args, limit, offset)
 	case SYBASE, TERADATA, FIREBIRD:
 		t.limitSql = ""
-	case MYSQL, MARIADB:
+	case MYSQL, MARIADB, TIDB, OCEANBASE:
 		t.limitSql = " LIMIT ?,? "
 		t.args = append(t.args, offset, limit)
 	}
