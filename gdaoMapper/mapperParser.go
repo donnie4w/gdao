@@ -151,8 +151,14 @@ func (m *mapperParser) namespaceMapperAdd(namespace, id string) {
 	}
 }
 
-func Builder(xmlpath string) {
-	mapperparser.parser(xmlpath)
+// Builder parses an XML mapping file located at the specified path to configure the application.
+// Parameters:
+//
+//	xmlPath: A string representing the file path of the XML mapping file.
+//
+// This function is responsible for reading the XML file and extracting configuration information for the application.
+func Builder(xmlPath string) {
+	mapperparser.parser(xmlPath)
 }
 
 type paramBean struct {
