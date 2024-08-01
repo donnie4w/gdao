@@ -41,7 +41,7 @@ func Test_check(t *testing.T) {
 			return
 		}
 		fmt.Println("Mappers:")
-		for _, mapper := range mappers.Mappers {
+		for _, mapper := range mappers.MapperList {
 			fmt.Printf("  Resource: %s\n", mapper.Resource)
 		}
 	} else if root.XMLName.Local == "mapper" {
@@ -77,7 +77,7 @@ func Test_mappers(t *testing.T) {
 
 	// Print the parsed data
 	fmt.Println("Mapper resources:")
-	for _, mapper := range mappers.Mappers {
+	for _, mapper := range mappers.MapperList {
 		fmt.Printf("  Resource: %s\n", mapper.Resource)
 	}
 }
