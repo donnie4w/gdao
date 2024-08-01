@@ -33,6 +33,9 @@ const (
 	TERADATA
 	NETEZZA
 	VERTICA
+	TIDB
+	OCEANBASE
+	OPENGAUSS
 )
 
 func SetLogger(on bool) {
@@ -67,7 +70,7 @@ func decodeFieldname(name string) string {
 func parseSql(dbtype base.DBType, sqlstr string, args ...any) string {
 	if len(args) > 0 {
 		switch dbtype {
-		case POSTGRESQL, GREENPLUM:
+		case POSTGRESQL, GREENPLUM, OPENGAUSS:
 			s := ""
 			k := 1
 			for _, c := range sqlstr {
