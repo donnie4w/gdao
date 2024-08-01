@@ -1,4 +1,4 @@
-## GDAO —— Go Persistence Layer Framework  [[中文](https://github.com/donnie4w/gdao/blob/master/README_ZH.md)]
+## GDAO —— Go Persistence Framework  [[中文](https://github.com/donnie4w/gdao/blob/master/README_ZH.md)]
 
 ### Introduction
 
