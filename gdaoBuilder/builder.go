@@ -79,6 +79,9 @@ func GetTableBean(tablename string, db *sql.DB) (tb *TableBean, err error) {
 func buildstruct(dbtype, dbname, tableName, tableAlias string, packageName string, tableBean *TableBean) string {
 	datetime := time.Now().Format(time.DateTime)
 	ua := ToUpperFirstLetter
+	if tableAlias == "" {
+		tableAlias = tableName
+	}
 	structName := ua(tableAlias)
 
 	timePackage := func() string {
