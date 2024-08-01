@@ -11,8 +11,6 @@ import (
 	. "github.com/donnie4w/gdao/base"
 )
 
-const VERSION = "1.1.0"
-
 type GStruct[P any, T any] interface {
 	Scanner
 	TableBase[T]
