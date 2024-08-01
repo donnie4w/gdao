@@ -13,7 +13,9 @@ import (
 	"github.com/donnie4w/gdao/base"
 )
 
-type JdaoMapper interface {
+// GdaoMapper is the interface for the gdaoMapper module, providing methods to manage transactions and database connections.
+// This interface defines the basic operations required for CRUD functionalities.
+type GdaoMapper interface {
 	IsAutocommit() bool
 	SetAutocommit(autocommit bool) (err error)
 	UseTransaction(tx base.Transaction)
@@ -543,30 +545,30 @@ func SelectsAny[T any](mapperId string, parameter any) ([]*T, error) {
 	return (*mapperInvoke[T])(defaultMapperHandler).SelectsAny(mapperId, parameter)
 }
 
-func SelectWithJdaoMapper[T any](jdaomapper JdaoMapper, mapperId string, args ...any) (*T, error) {
-	if v, ok := jdaomapper.(*mapperHandler); ok {
+func SelectWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) (*T, error) {
+	if v, ok := gdaomapper.(*mapperHandler); ok {
 		return (*mapperInvoke[T])(v).Select(mapperId, args...)
 	}
-	return nil, fmt.Errorf("jdaomapper is not a MapperHandler pointer")
+	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
 }
 
-func SelectAnyWithJdaoMapper[T any](jdaomapper JdaoMapper, mapperId string, parameter any) (*T, error) {
-	if v, ok := jdaomapper.(*mapperHandler); ok {
+func SelectAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) (*T, error) {
+	if v, ok := gdaomapper.(*mapperHandler); ok {
 		return (*mapperInvoke[T])(v).SelectAny(mapperId, parameter)
 	}
-	return nil, fmt.Errorf("jdaomapper is not a MapperHandler pointer")
+	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
 }
 
-func SelectsWithJdaoMapper[T any](jdaomapper JdaoMapper, mapperId string, args ...any) ([]*T, error) {
-	if v, ok := jdaomapper.(*mapperHandler); ok {
+func SelectsWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) ([]*T, error) {
+	if v, ok := gdaomapper.(*mapperHandler); ok {
 		return (*mapperInvoke[T])(v).Selects(mapperId, args...)
 	}
-	return nil, fmt.Errorf("jdaomapper is not a MapperHandler pointer")
+	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
 }
 
-func SelectsAnyWithJdaoMapper[T any](jdaomapper JdaoMapper, mapperId string, parameter any) ([]*T, error) {
-	if v, ok := jdaomapper.(*mapperHandler); ok {
+func SelectsAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) ([]*T, error) {
+	if v, ok := gdaomapper.(*mapperHandler); ok {
 		return (*mapperInvoke[T])(v).SelectsAny(mapperId, parameter)
 	}
-	return nil, fmt.Errorf("jdaomapper is not a MapperHandler pointer")
+	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
 }
