@@ -166,7 +166,7 @@ var (
 //	// And "db" is an instance of sql.DB configured for the database connection
 //	// And "gdao.MYSQL" represents the type of the database
 //	gdaoSlave.BindClass[User](db, gdao.MYSQL)
-func BindClass[T any](db *sql.DB, dbtype base.DBType) {
+func BindClass[T base.TableBase[T]](db *sql.DB, dbtype base.DBType) {
 	BindTable(db, dbtype, base.Classname[T]())
 }
 
@@ -186,10 +186,10 @@ func BindClass[T any](db *sql.DB, dbtype base.DBType) {
 //	// Assuming User is the entity class
 //	// And "dbhandle" is an instance of DBhandle configured for the database connection and CRUD operations
 //	gdaoSlave.BindClassWithDBhandle[User](dbhandle)
-func BindClassWithDBhandle[T any](dbhandle base.DBhandle) {
+func BindClassWithDBhandle[T base.TableBase[T]](dbhandle base.DBhandle) {
 	BindTableWithDBhandle(dbhandle, base.Classname[T]())
 }
 
-func UnbindClass[T any]() {
+func UnbindClass[T base.TableBase[T]]() {
 	UnbindTable(base.Classname[T]())
 }
