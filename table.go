@@ -118,7 +118,7 @@ func (t *Table[T]) UseDBHandle(db DBhandle) *Table[T] {
 	return t
 }
 
-func (t *Table[T]) executeQueryBeans(columns ...Column[T]) ([]*DataBean, error) {
+func (t *Table[T]) executeQueryList(columns ...Column[T]) (_r []*T, err error) {
 	t.completeSql4Columns(columns...)
 	t.completeSql4Query()
 
@@ -132,33 +132,38 @@ func (t *Table[T]) executeQueryBeans(columns ...Column[T]) ([]*DataBean, error) 
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
 	var condition *gdaoCache.Condition
 	if iscache {
-		condition = gdaoCache.NewCondition("list", t.sql, t.args...)
+		condition = gdaoCache.NewCondition("[]*"+t.classname, t.sql, t.args...)
 		if result := gdaoCache.GetCache(domain, t.classname, condition); result != nil {
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+t.sql+"]", t.args)
 			}
-			return result.([]*DataBean), nil
+			return result.([]*T), nil
 		}
 	}
 
 	if g := t.getDB(true); g != nil {
-		if v, err := g.ExecuteQueryBeans(t.sql, t.args...); err == nil {
+		var databeans []*DataBean
+		if databeans, err = g.ExecuteQueryBeans(t.sql, t.args...); err == nil && len(databeans) > 0 {
+			_r = make([]*T, 0)
+			for _, bean := range databeans {
+				if r, er := Scan[T](bean); er == nil {
+					_r = append(_r, r)
+				}
+			}
 			if iscache {
-				gdaoCache.SetCache(domain, t.classname, condition, v)
+				gdaoCache.SetCache(domain, t.classname, condition, _r)
 				if Logger.IsVaild {
 					Logger.Debug("[SET CACHE]["+t.sql+"]", t.args)
 				}
 			}
-			return v, nil
-		} else {
-			return nil, err
 		}
+		return
 	} else {
 		return nil, errInit
 	}
 }
 
-func (t *Table[T]) executeQueryBean(columns ...Column[T]) (*DataBean, error) {
+func (t *Table[T]) executeQuery(columns ...Column[T]) (_r *T, err error) {
 	t.completeSql4Columns(columns...)
 	t.completeSql4Query()
 
@@ -172,27 +177,28 @@ func (t *Table[T]) executeQueryBean(columns ...Column[T]) (*DataBean, error) {
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
 	var condition *gdaoCache.Condition
 	if iscache {
-		condition = gdaoCache.NewCondition("one", t.sql, t.args...)
+		condition = gdaoCache.NewCondition("*"+t.classname, t.sql, t.args...)
 		if result := gdaoCache.GetCache(domain, t.classname, condition); result != nil {
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+t.sql+"]", t.args)
 			}
-			return result.(*DataBean), nil
+			return result.(*T), nil
 		}
 	}
 
 	if g := t.getDB(true); g != nil {
-		if v, err := g.ExecuteQueryBean(t.sql, t.args...); err == nil {
-			if iscache {
-				gdaoCache.SetCache(domain, t.classname, condition, v)
-				if Logger.IsVaild {
-					Logger.Debug("[SET CACHE]["+t.sql+"]", t.args)
+		var bean *DataBean
+		if bean, err = g.ExecuteQueryBean(t.sql, t.args...); err == nil {
+			if _r, err = Scan[T](bean); err == nil {
+				if iscache {
+					gdaoCache.SetCache(domain, t.classname, condition, _r)
+					if Logger.IsVaild {
+						Logger.Debug("[SET CACHE]["+t.sql+"]", t.args)
+					}
 				}
 			}
-			return v, nil
-		} else {
-			return nil, err
 		}
+		return
 	} else {
 		return nil, errInit
 	}
@@ -352,27 +358,14 @@ func (t *Table[T]) Selects(columns ...Column[T]) (_r []*T, err error) {
 	if columns == nil {
 		columns = t.columns
 	}
-	var databeans []*DataBean
-	if databeans, err = t.executeQueryBeans(columns...); err == nil && len(databeans) > 0 {
-		_r = make([]*T, 0)
-		for _, bean := range databeans {
-			if r, er := Scan[T](bean); er == nil {
-				_r = append(_r, r)
-			}
-		}
-	}
-	return
+	return t.executeQueryList(columns...)
 }
 
 func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
 	if columns == nil {
 		columns = t.columns
 	}
-	var bean *DataBean
-	if bean, err = t.executeQueryBean(columns...); err == nil && bean != nil {
-		return Scan[T](bean)
-	}
-	return
+	return t.executeQuery(columns...)
 }
 
 func (t *Table[T]) Update() (int64, error) {
