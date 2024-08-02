@@ -157,8 +157,8 @@ func (m *mapperParser) namespaceMapperAdd(namespace, id string) {
 //	xmlPath: A string representing the file path of the XML mapping file.
 //
 // This function is responsible for reading the XML file and extracting configuration information for the application.
-func Builder(xmlPath string) {
-	mapperparser.parser(xmlPath)
+func Builder(xmlPath string) error {
+	return mapperparser.parser(xmlPath)
 }
 
 type paramBean struct {
@@ -215,7 +215,11 @@ func (p *paramBean) setParameter(parameter any) (args []any, err error) {
 		return args, nil
 	}
 	if isDBType(p.inputType) {
-		return []any{parameter}, nil
+		if len(p.parameterNames) == 1 {
+			return []any{parameter}, nil
+		} else {
+			return nil, p.err_num_no_match(len(p.parameterNames), 1)
+		}
 	}
 	if isSlice(p.inputType) {
 		typ := reflect.TypeOf(parameter)
