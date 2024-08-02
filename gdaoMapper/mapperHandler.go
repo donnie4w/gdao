@@ -91,6 +91,9 @@ func (t *mapperHandler) SelectBean(mapperId string, args ...any) (r *DataBean, e
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
 		return r, err
 	}
+	if Logger.IsVaild {
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectBean SQL["+pb.sql+"]ARGS", args)
+	}
 	return t._selectBean(mapperId, pb, args...)
 }
 
@@ -100,18 +103,18 @@ func (t *mapperHandler) SelectAny(mapperId string, parameter any) (r *DataBean, 
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
 		return r, err
 	}
+	if Logger.IsVaild {
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectAny SQL["+pb.sql+"]ARGS", args)
+	}
 	return t._selectBean(mapperId, pb, args...)
 }
 
 func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any) (r *DataBean, err error) {
-	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nSELECTONE SQL["+pb.sql+"]ARGS", args)
-	}
 	domain := gdaoCache.GetMapperDomain(pb.namespace, pb.id)
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
 	if isCache {
-		condition = gdaoCache.NewCondition("one", pb.sql, args...)
+		condition = gdaoCache.NewCondition("*DataBean", pb.sql, args...)
 		if result := gdaoCache.GetMapperCache(domain, pb.namespace, pb.id, condition); result != nil {
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
@@ -135,6 +138,9 @@ func (t *mapperHandler) SelectsBean(mapperId string, args ...any) (r []*DataBean
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
 		return r, err
 	}
+	if Logger.IsVaild {
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectsBean SQL["+pb.sql+"]ARGS", args)
+	}
 	return t._selectsBean(mapperId, pb, args...)
 }
 
@@ -144,18 +150,18 @@ func (t *mapperHandler) SelectsAny(mapperId string, parameter any) (r []*DataBea
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
 		return r, err
 	}
+	if Logger.IsVaild {
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectsAny SQL["+pb.sql+"]ARGS", args)
+	}
 	return t._selectsBean(mapperId, pb, args...)
 }
 
 func (t *mapperHandler) _selectsBean(mapperId string, pb *paramBean, args ...any) (r []*DataBean, err error) {
-	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nSELECTLIST SQL["+pb.sql+"]ARGS", args)
-	}
 	domain := gdaoCache.GetMapperDomain(pb.namespace, pb.id)
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
 	if isCache {
-		condition = gdaoCache.NewCondition("list", pb.sql, args...)
+		condition = gdaoCache.NewCondition("[]*DataBean", pb.sql, args...)
 		if result := gdaoCache.GetMapperCache(domain, pb.namespace, pb.id, condition); result != nil {
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
