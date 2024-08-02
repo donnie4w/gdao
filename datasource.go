@@ -69,7 +69,9 @@ func getDBhandle(classname, tableName string, queryType bool) (r DBhandle) {
 
 func getMapperDBhandle(namespace, id string, queryType bool) (r DBhandle) {
 	if namespace != "" && id != "" && queryType && gdaoSlave.Len() > 0 {
-		r = gdaoSlave.GetMapper(namespace, id)
+		if r = gdaoSlave.GetMapper(namespace, id); r != nil {
+			return
+		}
 	}
 	if namespace != "" && id != "" && r == nil && dbContainer.len() > 0 {
 		if h, ok := dbContainer.getMapper(namespace, id); ok {
