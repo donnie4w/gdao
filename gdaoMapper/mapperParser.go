@@ -11,6 +11,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 	. "github.com/donnie4w/gofer/hashmap"
 	"os"
 	"reflect"
@@ -210,7 +211,7 @@ func (p *paramBean) err_params_no_found(param string) error {
 }
 
 func (p *paramBean) setParameter(parameter any) (args []any, err error) {
-	defer base.Recover(&err)
+	defer util.Recover(&err)
 	if p.inputType == "" || parameter == nil || len(p.parameterNames) == 0 {
 		return args, nil
 	}
