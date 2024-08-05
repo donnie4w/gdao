@@ -36,35 +36,15 @@ const (
 	TIDB
 	OCEANBASE
 	OPENGAUSS
+	HSQLDB
+	ENTERPRISEDB
+	SAPHANA
+	COCKROACHDB
+	INFORMIX
 )
 
 func SetLogger(on bool) {
 	base.Logger.SetLogger(on)
-}
-
-func iskey(name string) bool {
-	switch name {
-	case "break", "default", "func", "interface", "select", "case", "defer", "go", "map", "struct", "chan", "else", "goto", "package", "switch", "const", "fallthrough", "if", "range", "type", "continue", "for", "import", "return", "var":
-		return true
-	default:
-		return false
-	}
-}
-
-func encodeFieldname(name string) string {
-	if iskey(name) {
-		return name + "_"
-	}
-	return name
-}
-
-func decodeFieldname(name string) string {
-	if name[len(name)-1:] == "_" {
-		if n := name[:len(name)-1]; iskey(n) {
-			return n
-		}
-	}
-	return name
 }
 
 func parseSql(dbtype base.DBType, sqlstr string, args ...any) string {
