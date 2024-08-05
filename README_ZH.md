@@ -21,6 +21,7 @@ Gdao是一种创新的持久层解决方案。主要目的在于 减少编程量
 4. **支持数据缓存**：gdao支持数据缓存，并支持对缓存数据时效，与数据回收等特性进行细致控制
 5. **广泛兼容性**：gdao理论上支持所有实现 go 数据库驱动接口的数据库
 6. **高级特性**：支持事务，存储过程，批处理等数据库操作
+7. **支持SQL与程序分离**：类似 mybatis，gdao支持xml文件写sql映射调用。这是少有的orm支持SQL与程序分离的功能，但是该功能非常强大。
 
 
 #### GDAO 创新的orm解决方案
@@ -37,7 +38,11 @@ Gdao是[Jdao](https://github.com/donnie4w/jdao)的功能等价框架，设计模
    而Gdao虽然提供了完整的sql映射接口，但是建议只映射复杂SQL，或操作部分标准实体类无法完成的CURD操作。
    Gdao的SQL配置文件参考mybatis配置文件格式，实现自己新的解析器，使得配置参数在类型的容忍度上更高，更灵活。（可以参考文档）
 
+------
 
+![](https://tlnet.top/statics/tlnet/29197.jpg)
+
+------
 ### 核心组件
 
 #### 1. gdao
@@ -59,6 +64,8 @@ Gdao是[Jdao](https://github.com/donnie4w/jdao)的功能等价框架，设计模
 #### 4. gdaoMapper
 
 执行Sql可以直接调用Gdao的CRUD接口。也可以用xml文件映射，通过gdaoMapper调用Mapper Id执行
+
+------
 
 ## 快速入门
 
