@@ -10,6 +10,7 @@ package gdaoSlave
 import (
 	"database/sql"
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 )
 
 var (
@@ -167,7 +168,7 @@ var (
 //	// And "gdao.MYSQL" represents the type of the database
 //	gdaoSlave.BindClass[User](db, gdao.MYSQL)
 func BindClass[T base.TableBase[T]](db *sql.DB, dbtype base.DBType) {
-	BindTable(db, dbtype, base.Classname[T]())
+	BindTable(db, dbtype, util.Classname[T]())
 }
 
 // BindClassWithDBhandle binds the specified entity class to use the given DB handle for database qurey operation.
@@ -187,9 +188,9 @@ func BindClass[T base.TableBase[T]](db *sql.DB, dbtype base.DBType) {
 //	// And "dbhandle" is an instance of DBhandle configured for the database connection and CRUD operations
 //	gdaoSlave.BindClassWithDBhandle[User](dbhandle)
 func BindClassWithDBhandle[T base.TableBase[T]](dbhandle base.DBhandle) {
-	BindTableWithDBhandle(dbhandle, base.Classname[T]())
+	BindTableWithDBhandle(dbhandle, util.Classname[T]())
 }
 
 func UnbindClass[T base.TableBase[T]]() {
-	UnbindTable(base.Classname[T]())
+	UnbindTable(util.Classname[T]())
 }
