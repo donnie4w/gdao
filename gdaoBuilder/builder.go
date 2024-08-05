@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 	"log"
 	"reflect"
 	"strings"
@@ -78,7 +79,7 @@ func GetTableBean(tablename string, db *sql.DB) (tb *TableBean, err error) {
 
 func buildstruct(dbtype, dbname, tableName, tableAlias string, packageName string, tableBean *TableBean) string {
 	datetime := time.Now().Format(time.DateTime)
-	ua := ToUpperFirstLetter
+	ua := util.ToUpperFirstLetter
 	if tableAlias == "" {
 		tableAlias = tableName
 	}
@@ -114,10 +115,11 @@ package ` + packageName + `
 
 import (
 	"fmt"
-	"github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao"
+	"github.com/donnie4w/gdao/base"
 	` + timePackage + `
-)`
+)
+`
 
 	for _, bean := range tableBean.Fieldlist {
 		log.Println(bean)
@@ -228,8 +230,8 @@ func (u *` + structName + `) Scan(fieldname string, value any) {
 	for i, bean := range tableBean.Fieldlist {
 		columns = columns + "t." + ua(bean.FieldName)
 		fieldsString = fieldsString + "\"" + ua(bean.FieldName) + ":\"" + ",t.Get" + ua(bean.FieldName) + "()"
-		fields = fields + ua(bean.FieldName) + ":" + encodeFieldname(bean.FieldName)
-		columnsStr = columnsStr + encodeFieldname(bean.FieldName)
+		fields = fields + ua(bean.FieldName) + ":" + util.EncodeFieldname(bean.FieldName)
+		columnsStr = columnsStr + util.EncodeFieldname(bean.FieldName)
 		if i < len(tableBean.Fieldlist)-1 {
 			columns = columns + ","
 			fieldsString = fieldsString + `, ",",`
@@ -307,7 +309,7 @@ func New` + structName + `(tablename ...string) (_r *` + structName + `) {
 `
 	for _, bean := range tableBean.Fieldlist {
 		structField := strings.ToLower(tableAlias) + "_" + ua(bean.FieldName)
-		varfield := encodeFieldname(bean.FieldName)
+		varfield := util.EncodeFieldname(bean.FieldName)
 		s := `
 	` + varfield + ` := &` + structField + `[` + structName + `]{fieldName: "` + bean.FieldName + `"}
 	` + varfield + `.Field.FieldName = "` + bean.FieldName + `"
