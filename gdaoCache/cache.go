@@ -9,18 +9,19 @@ package gdaoCache
 
 import (
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 )
 
 func BindClass[T base.TableBase[T]]() {
-	gdaocache.Bind(base.Classname[T]())
+	gdaocache.Bind(util.Classname[T]())
 }
 
 func BindClassWithCacheHandle[T base.TableBase[T]](cacheHandle *CacheHandle) {
-	gdaocache.BindWithCacheHandle(base.Classname[T](), cacheHandle)
+	gdaocache.BindWithCacheHandle(util.Classname[T](), cacheHandle)
 }
 
 func UnbindClass[T base.TableBase[T]]() {
-	gdaocache.Unbind(base.Classname[T]())
+	gdaocache.Unbind(util.Classname[T]())
 }
 
 // BindTableNames binds one or more table names to enable the gdao caching mechanism for data operations on these tables.
