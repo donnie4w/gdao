@@ -9,9 +9,7 @@ package base
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/donnie4w/gofer/util"
-	"reflect"
 )
 
 const VERSION = "1.1.0"
@@ -36,23 +34,7 @@ type DBhandle interface {
 	GetDB() *sql.DB
 }
 
-func Recover(errp *error) {
-	if r := recover(); r != nil {
-		*errp = fmt.Errorf("panic recovering: %v", r)
-	}
-}
-
 var MapperPre = string(util.Base58EncodeForInt64(uint64(util.RandId())))
-
-func Classname[T any]() string {
-	var t T
-	tType := reflect.TypeOf(t)
-	if tType.Kind() == reflect.Ptr {
-		return tType.Elem().String()
-	} else {
-		return tType.String()
-	}
-}
 
 type In struct {
 	Value any
