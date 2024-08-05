@@ -10,13 +10,14 @@ package gdao
 import (
 	"database/sql"
 	. "github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 )
 
 func executeQueryBeans(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (databases []*DataBean, err error) {
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
-	defer Recover(&err)
+	defer util.Recover(&err)
 	var stmt *sql.Stmt
 	if tx != nil {
 		stmt, err = tx.Prepare(sqlstr)
@@ -59,7 +60,7 @@ func executeQueryBean(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (dataB
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
-	defer Recover(&err)
+	defer util.Recover(&err)
 	var stmt *sql.Stmt
 	if tx != nil {
 		stmt, err = tx.Prepare(sqlstr)
@@ -99,7 +100,7 @@ func executeUpdate(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (r int64,
 	if tx == nil && db == nil {
 		return 0, errInit
 	}
-	defer Recover(&err)
+	defer util.Recover(&err)
 	var stmtIns *sql.Stmt
 	if tx != nil {
 		stmtIns, err = tx.Prepare(sqlstr)
@@ -121,7 +122,7 @@ func executeBatch(tx *sql.Tx, db *sql.DB, sqlstr string, args [][]any) (r []int6
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
-	defer Recover(&err)
+	defer util.Recover(&err)
 	var stmtIns *sql.Stmt
 	if tx != nil {
 		stmtIns, err = tx.Prepare(sqlstr)
