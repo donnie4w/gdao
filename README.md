@@ -3,6 +3,9 @@
 ### Introduction
 
 Gdao is an innovative persistence layer solution aimed at reducing coding workload, improving productivity, enhancing performance, supporting multi-data source integration, and facilitating data read-write separation. By leveraging Gdao, developers can decrease the amount of code required for the persistence layer by 30% to 50%, establish unified coding standards, minimize errors, and ensure easier maintenance and expansion.
+
+gdao for go is equivalent to [hibernate](https://github.com/hibernate/hibernate-orm)+[mybatis](https://github.com/mybatis/mybatis-3) for java, the gdao framework combines the abstraction of Hibernate and the flexibility of MyBatis, and solves the pain points of their respective long-standing use on ORM frameworks. Refer to the [jdao usage documentation](https://tlnet.top/jdaoendoc) for pain points between hibernate and mybatis
+
 * The GDAO design structure is both concise and rigorous, with all interfaces and functions named descriptively so their purpose is immediately clear.
 * Even if you are new to GDAO, you can quickly understand its code and the associated data behaviors.
 * The simplicity of GDAO ensures that you can master its usage within minutes.
