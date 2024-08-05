@@ -12,6 +12,7 @@ import (
 	"github.com/donnie4w/gdao"
 	"github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoCache"
+	"github.com/donnie4w/gdao/util"
 	"reflect"
 	"time"
 )
@@ -47,7 +48,7 @@ func _select[T any](mh *mapperHandler, pb *paramBean, args ...any) (r *T, err er
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
 	if isCache {
-		condition = gdaoCache.NewCondition("*"+base.Classname[T](), pb.sql, args...)
+		condition = gdaoCache.NewCondition("*"+util.Classname[T](), pb.sql, args...)
 		if result := gdaoCache.GetMapperCache(domain, pb.namespace, pb.id, condition); result != nil {
 			if base.Logger.IsVaild {
 				base.Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
@@ -105,7 +106,7 @@ func selects[T any](mh *mapperHandler, pb *paramBean, args ...any) (r []*T, err 
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
 	if isCache {
-		condition = gdaoCache.NewCondition("[]*"+base.Classname[T](), pb.sql, args...)
+		condition = gdaoCache.NewCondition("[]*"+util.Classname[T](), pb.sql, args...)
 		if result := gdaoCache.GetMapperCache(domain, pb.namespace, pb.id, condition); result != nil {
 			if base.Logger.IsVaild {
 				base.Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
@@ -157,7 +158,7 @@ func selects[T any](mh *mapperHandler, pb *paramBean, args ...any) (r []*T, err 
 }
 
 func toT[T any](databean *base.DataBean) (r *T, err error) {
-	defer base.Recover(&err)
+	defer util.Recover(&err)
 	if databean == nil {
 		return
 	}
