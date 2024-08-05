@@ -8,9 +8,9 @@ Gdao is an innovative persistence layer solution aimed at reducing coding worklo
 * The simplicity of GDAO ensures that you can master its usage within minutes.
 
 
-### [Official Website](https://tlnet.top/gdao)
+### [Official Website](https://tlnet.top/gdaoen)
 
-### [Documentation](https://tlnet.top/gdaodoc)
+### [Documentation](https://tlnet.top/gdaoendoc)
 
 ### [Demo](https://github.com/donnie4w/gdaodemo)
 
@@ -22,6 +22,7 @@ Gdao is an innovative persistence layer solution aimed at reducing coding worklo
 4. **Support for Data Caching**: Gdao supports data caching with detailed control over cache data lifecycle and recycling features.
 5. **Broad Compatibility**: Gdao theoretically supports all databases that implement the Go database driver interface.
 6. **Advanced Features**: Supports transactions, stored procedures, batch processing, and other database operations.
+7. **Support SQL and program separation**: Similar to mybatis, gdao supports xml file write sql mapping calls. This is one of the few orm features that supports the separation of SQL and programs, but it is very powerful.
 
 #### GDAO's Innovative ORM Solution
 
@@ -33,6 +34,12 @@ Gdao is a sibling framework to [Jdao](https://github.com/donnie4w/jdao), sharing
    Therefore, Gdao recommends using Gdao's CRUD interfaces for complex SQL problems. Gdao provides flexible data conversion and efficient object mapping implementations, avoiding excessive use of time-consuming operations such as reflection.
 3. **SQL Mapping Files**: For complex SQL operations, Gdao provides corresponding CRUD interfaces. It also supports mapping SQL through XML configuration for interface invocation, similar to the Java MyBatis ORM framework. However, unlike MyBatis which requires mapping all SQL operations, Gdao provides complete SQL mapping interfaces but recommends only mapping complex SQL or operations that standardized entity classes cannot complete.
    Gdao's SQL configuration files reference the MyBatis configuration file format, implementing a new parser that allows for higher flexibility and tolerance of configuration parameter types (refer to the documentation).
+
+------
+
+![](https://tlnet.top/statics/tlnet/27567.jpg)
+
+------
 
 ### Core Components
 
@@ -56,12 +63,14 @@ Read-write separation operation entry point supporting the following functionali
 
 Execute SQL directly by calling Gdao's CRUD interfaces or use XML file mappings and call through gdaoMapper by Mapper Id
 
+------
+
 ## Quick Start
 
 ### 1. Installation
 
 ```bash
-# Import gdao
+# import gdao
 go get github.com/donnie4w/gdao
 ```
 
