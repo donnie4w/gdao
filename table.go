@@ -10,6 +10,7 @@ package gdao
 import (
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoCache"
+	"github.com/donnie4w/gdao/util"
 	"strings"
 )
 
@@ -126,7 +127,7 @@ func (t *Table[T]) executeQueryList(columns ...Column[T]) (_r []*T, err error) {
 		Logger.Debug("[SELETE LIST]["+t.sql+"]", t.args)
 	}
 	if t.classname == "" {
-		t.classname = Classname[T]()
+		t.classname = util.Classname[T]()
 	}
 	domain := gdaoCache.GetDomain(t.classname, t.tableName)
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
@@ -171,7 +172,7 @@ func (t *Table[T]) executeQuery(columns ...Column[T]) (_r *T, err error) {
 		Logger.Debug("[SELETE ONE]["+t.sql+"]", t.args)
 	}
 	if t.classname == "" {
-		t.classname = Classname[T]()
+		t.classname = util.Classname[T]()
 	}
 	domain := gdaoCache.GetDomain(t.classname, t.tableName)
 	iscache := (t.isCache == 1 || domain != "") && t.isCache != 2
@@ -257,7 +258,7 @@ func (t *Table[T]) getDB(queryType bool) (r DBhandle) {
 	if t.dbhandler != nil {
 		return t.dbhandler
 	}
-	return getDBhandle(Classname[T](), t.tableName, queryType && !t.mustMaster)
+	return getDBhandle(util.Classname[T](), t.tableName, queryType && !t.mustMaster)
 }
 
 func (t *Table[T]) GroupBy(columns ...Column[T]) *Table[T] {
@@ -313,15 +314,15 @@ func (t *Table[T]) limitAdapt(limit int64) {
 		t.limitSql = " OFFSET 0 ROWS FETCH NEXT ? ROWS ONLY "
 	case ORACLE:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
-	case NETEZZA, GREENPLUM, POSTGRESQL, OPENGAUSS:
+	case NETEZZA, GREENPLUM, POSTGRESQL, OPENGAUSS, ENTERPRISEDB, COCKROACHDB:
 		t.limitSql = " LIMIT ? OFFSET 0 "
-	case DB2:
+	case DB2, INFORMIX:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
 	case TERADATA, FIREBIRD, SYBASE:
 		t.limitSql = ""
 	case DERBY:
 		t.limitSql = " FETCH FIRST ? ROWS ONLY "
-	case INGRES, VERTICA, MYSQL, MARIADB, SQLITE, TIDB, OCEANBASE:
+	case INGRES, VERTICA, MYSQL, MARIADB, SQLITE, TIDB, OCEANBASE, HSQLDB:
 		t.limitSql = " LIMIT ? "
 	default:
 		t.limitSql = ""
@@ -339,7 +340,7 @@ func (t *Table[T]) limit2Adapt(offset, limit int64) {
 	case ORACLE, SQLSERVER:
 		t.limitSql = " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY "
 		t.args = append(t.args, offset, limit)
-	case SQLITE, NETEZZA, INGRES, VERTICA:
+	case SQLITE, NETEZZA, INGRES, VERTICA, HSQLDB, ENTERPRISEDB, COCKROACHDB:
 		t.limitSql = " LIMIT ? OFFSET ? "
 		t.args = append(t.args, limit, offset)
 	case DB2, DERBY:
