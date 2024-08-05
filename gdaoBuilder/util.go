@@ -9,29 +9,9 @@ package gdaoBuilder
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
-	"strings"
 )
-
-func ToUpperFirstLetter(s string) string {
-	return strings.ToUpper(string(s[0])) + s[1:]
-}
-
-func encodeFieldname(k string) string {
-	if iskey(k) {
-		return k + "_"
-	}
-	return k
-}
-
-func iskey(name string) bool {
-	switch name {
-	case "break", "default", "func", "interface", "select", "case", "defer", "go", "map", "struct", "chan", "else", "goto", "package", "switch", "const", "fallthrough", "if", "range", "type", "continue", "for", "import", "return", "var":
-		return true
-	default:
-		return false
-	}
-}
 
 var nullTimeType = reflect.TypeOf(sql.NullTime{})
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
@@ -153,4 +133,11 @@ func mustPtr(rtype reflect.Type) bool {
 	default:
 		return true
 	}
+}
+
+func aslog(tableName, tableAlias string) string {
+	if tableAlias != "" && tableAlias != tableName {
+		return fmt.Sprint("["+tableName+" ]As[", tableAlias, " ]")
+	}
+	return tableName
 }
