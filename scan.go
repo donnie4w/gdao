@@ -10,6 +10,7 @@ package gdao
 import (
 	"fmt"
 	. "github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/util"
 	"reflect"
 	"strings"
 )
@@ -27,7 +28,7 @@ type Scanner interface {
 type scaner[T any] DataBean
 
 func (s *scaner[T]) Scan() (t *T, err error) {
-	defer Recover(&err)
+	defer util.Recover(&err)
 	if s == nil {
 		return nil, nil
 	}
@@ -54,7 +55,7 @@ func (s *scaner[T]) Scan() (t *T, err error) {
 	if num < dataBean.Len() {
 		for i := 0; i < num; i++ {
 			field := typ.Field(i)
-			fieldName := strings.ToLower(decodeFieldname(field.Name))
+			fieldName := strings.ToLower(util.DecodeFieldname(field.Name))
 			if value := dataBean.ValueByName(fieldName); value != nil {
 				ScanValue(val.Field(i), value)
 			} else {
