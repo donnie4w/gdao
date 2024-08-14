@@ -41,12 +41,12 @@ func (h *dbHandler) GetTransaction() (r Transaction, err error) {
 	return NewTransactionWithDBhandle(h)
 }
 
-func (h *dbHandler) ExecuteQueryBeans(sqlstr string, args ...any) ([]*DataBean, error) {
-	return h.gdbc.ExecuteQueryBeans(sqlstr, args...)
+func (h *dbHandler) ExecuteQueryBean(sqlstr string, args ...any) *DataBean {
+	return h.gdbc.ExecuteQueryBean(sqlstr, args...)
 }
 
-func (h *dbHandler) ExecuteQueryBean(sqlstr string, args ...any) (*DataBean, error) {
-	return h.gdbc.ExecuteQueryBean(sqlstr, args...)
+func (h *dbHandler) ExecuteQueryBeans(sqlstr string, args ...any) (r *DataBeans) {
+	return h.gdbc.ExecuteQueryBeans(sqlstr, args...)
 }
 
 func (h *dbHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
