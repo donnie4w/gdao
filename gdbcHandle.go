@@ -13,8 +13,8 @@ import (
 )
 
 type gdbcHandle interface {
-	ExecuteQueryBeans(sqlstr string, args ...any) ([]*base.DataBean, error)
-	ExecuteQueryBean(sqlstr string, args ...any) (*base.DataBean, error)
+	ExecuteQueryBeans(sqlstr string, args ...any) *base.DataBeans
+	ExecuteQueryBean(sqlstr string, args ...any) *base.DataBean
 	ExecuteUpdate(sqlstr string, args ...any) (int64, error)
 	ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error)
 	GetDBType() base.DBType
@@ -39,14 +39,26 @@ func (g *gdbcHandler) GetDB() *sql.DB {
 	return g.DB
 }
 
-func (g *gdbcHandler) ExecuteQueryBeans(sqlstr string, args ...any) ([]*base.DataBean, error) {
+func (g *gdbcHandler) ExecuteQueryBeans(sqlstr string, args ...any) (r *base.DataBeans) {
+	r = &base.DataBeans{}
 	sqlstr = parseSql(g.DBType, sqlstr, args)
-	return executeQueryBeans(g.TX, g.DB, sqlstr, args...)
+	if dbs, err := executeQueryBeans(g.TX, g.DB, sqlstr, args...); err == nil {
+		r.Beans = dbs
+	} else {
+		r.SetError(err)
+	}
+	return
 }
 
-func (g *gdbcHandler) ExecuteQueryBean(sqlstr string, args ...any) (*base.DataBean, error) {
+func (g *gdbcHandler) ExecuteQueryBean(sqlstr string, args ...any) (r *base.DataBean) {
 	sqlstr = parseSql(g.DBType, sqlstr, args)
-	return executeQueryBean(g.TX, g.DB, sqlstr, args...)
+	if db, err := executeQueryBean(g.TX, g.DB, sqlstr, args...); err == nil {
+		return db
+	} else {
+		r = &base.DataBean{}
+		r.SetError(err)
+	}
+	return
 }
 
 func (g *gdbcHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
