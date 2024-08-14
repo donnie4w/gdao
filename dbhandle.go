@@ -16,11 +16,13 @@ import "github.com/donnie4w/gdao/base"
 // The function returns a pointer to a value of type *T, which is typically a pointer to a struct that holds the query results.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns a filled result object and nil.
 func ExecuteQuery[T any](sql string, args ...any) (r *T, err error) {
-	if databean, err := defaultDBhandle.ExecuteQueryBean(sql, args...); err == nil {
-		return Scan[T](databean)
+	if databean := defaultDBhandle.ExecuteQueryBean(sql, args...); databean.GetError() == nil {
+		r = new(T)
+		err = databean.Scan(r)
 	} else {
-		return nil, err
+		err = databean.GetError()
 	}
+	return
 }
 
 // ExecuteQueryList executes an SQL query and returns a list of parsed results.
@@ -30,15 +32,18 @@ func ExecuteQuery[T any](sql string, args ...any) (r *T, err error) {
 // The function returns a slice of pointers to values of type T, where each element represents one row of the query results.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns a slice of filled result objects and nil.
 func ExecuteQueryList[T any](sql string, args ...any) (r []*T, err error) {
-	var databeans []*base.DataBean
-	if databeans, err = defaultDBhandle.ExecuteQueryBeans(sql, args...); err == nil && len(databeans) > 0 {
+	if databeans := defaultDBhandle.ExecuteQueryBeans(sql, args...); databeans.GetError() == nil && databeans.Len() > 0 {
 		r = make([]*T, 0)
-		for _, databean := range databeans {
-			var t *T
-			if t, err = Scan[T](databean); err == nil {
+		for _, databean := range databeans.Beans {
+			t := new(T)
+			if err = databean.Scan(t); err == nil {
 				r = append(r, t)
+			} else {
+				break
 			}
 		}
+	} else {
+		return nil, databeans.GetError()
 	}
 	return
 }
@@ -48,9 +53,11 @@ func ExecuteQueryList[T any](sql string, args ...any) (r []*T, err error) {
 // args is an optional list of parameters to substitute placeholders in the SQL query.
 // The function returns a pointer to a DataBean object, which typically holds the data retrieved from a single row in the query results.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns a filled DataBean object and nil.
-func ExecuteQueryBean(sql string, args ...any) (*base.DataBean, error) {
+func ExecuteQueryBean(sql string, args ...any) *base.DataBean {
 	if defaultDBhandle == nil {
-		return nil, errInit
+		r := &base.DataBean{}
+		r.SetError(errInit)
+		return r
 	}
 	return defaultDBhandle.ExecuteQueryBean(sql, args...)
 }
@@ -60,9 +67,11 @@ func ExecuteQueryBean(sql string, args ...any) (*base.DataBean, error) {
 // args is an optional list of parameters to substitute placeholders in the SQL query.
 // The function returns a slice of pointers to DataBean objects, where each element represents one row of the query results.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns a slice of filled DataBean objects and nil.
-func ExecuteQueryBeans(sql string, args ...any) ([]*base.DataBean, error) {
+func ExecuteQueryBeans(sql string, args ...any) *base.DataBeans {
 	if defaultDBhandle == nil {
-		return nil, errInit
+		r := &base.DataBeans{}
+		r.SetError(errInit)
+		return r
 	}
 	return defaultDBhandle.ExecuteQueryBeans(sql, args...)
 }
