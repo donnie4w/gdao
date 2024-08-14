@@ -86,10 +86,28 @@ func (t *mapperHandler) getDBhandle(namespace, id string, queryType bool) (dbhan
 	return
 }
 
-func (t *mapperHandler) SelectBean(mapperId string, args ...any) (r *DataBean, err error) {
+func (t *mapperHandler) SelectBeanDirect(mapperId string, args ...any) (r *DataBean) {
 	var pb *paramBean
+	var err error
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
-		return r, err
+		r = &DataBean{}
+		r.SetError(err)
+		return
+	}
+	if Logger.IsVaild {
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectBeanDirect SQL["+pb.sql+"]ARGS", args)
+	}
+	return t._selectBean(mapperId, pb, args...)
+}
+
+func (t *mapperHandler) SelectBean(mapperId string, parameter any) (r *DataBean) {
+	var pb *paramBean
+	var args []any
+	var err error
+	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
+		r = &DataBean{}
+		r.SetError(err)
+		return
 	}
 	if Logger.IsVaild {
 		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectBean SQL["+pb.sql+"]ARGS", args)
@@ -97,19 +115,7 @@ func (t *mapperHandler) SelectBean(mapperId string, args ...any) (r *DataBean, e
 	return t._selectBean(mapperId, pb, args...)
 }
 
-func (t *mapperHandler) SelectAny(mapperId string, parameter any) (r *DataBean, err error) {
-	var pb *paramBean
-	var args []any
-	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
-		return r, err
-	}
-	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectAny SQL["+pb.sql+"]ARGS", args)
-	}
-	return t._selectBean(mapperId, pb, args...)
-}
-
-func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any) (r *DataBean, err error) {
+func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any) (r *DataBean) {
 	domain := gdaoCache.GetMapperDomain(pb.namespace, pb.id)
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
@@ -119,10 +125,10 @@ func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any)
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
 			}
-			return result.(*DataBean), nil
+			return result.(*DataBean)
 		}
 	}
-	if r, err = t.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBean(pb.sql, args...); err == nil {
+	if r = t.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBean(pb.sql, args...); r.GetError() == nil {
 		if isCache {
 			gdaoCache.SetMapperCache(domain, pb.namespace, pb.id, condition, r)
 			if Logger.IsVaild {
@@ -133,30 +139,36 @@ func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any)
 	return
 }
 
-func (t *mapperHandler) SelectsBean(mapperId string, args ...any) (r []*DataBean, err error) {
+func (t *mapperHandler) SelectBeansDirect(mapperId string, args ...any) *DataBeans {
 	var pb *paramBean
+	var err error
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
-		return r, err
+		r := &DataBeans{}
+		r.SetError(err)
+		return r
 	}
 	if Logger.IsVaild {
 		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectsBean SQL["+pb.sql+"]ARGS", args)
 	}
-	return t._selectsBean(mapperId, pb, args...)
+	return t._selectBeans(mapperId, pb, args...)
 }
 
-func (t *mapperHandler) SelectsAny(mapperId string, parameter any) (r []*DataBean, err error) {
+func (t *mapperHandler) SelectBeans(mapperId string, parameter any) *DataBeans {
 	var pb *paramBean
 	var args []any
+	var err error
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
-		return r, err
+		r := &DataBeans{}
+		r.SetError(err)
+		return r
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectsAny SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nSelectBeans SQL["+pb.sql+"]ARGS", args)
 	}
-	return t._selectsBean(mapperId, pb, args...)
+	return t._selectBeans(mapperId, pb, args...)
 }
 
-func (t *mapperHandler) _selectsBean(mapperId string, pb *paramBean, args ...any) (r []*DataBean, err error) {
+func (t *mapperHandler) _selectBeans(mapperId string, pb *paramBean, args ...any) (r *DataBeans) {
 	domain := gdaoCache.GetMapperDomain(pb.namespace, pb.id)
 	isCache := domain != ""
 	var condition *gdaoCache.Condition
@@ -166,10 +178,10 @@ func (t *mapperHandler) _selectsBean(mapperId string, pb *paramBean, args ...any
 			if Logger.IsVaild {
 				Logger.Debug("[GET CACHE]["+pb.sql+"]", args)
 			}
-			return result.([]*DataBean), nil
+			return result.(*DataBeans)
 		}
 	}
-	if r, err = t.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBeans(pb.sql, args...); err == nil {
+	if r = t.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBeans(pb.sql, args...); r.GetError() == nil && r.Len() > 0 {
 		if isCache {
 			gdaoCache.SetMapperCache(domain, pb.namespace, pb.id, condition, r)
 			if Logger.IsVaild {
@@ -180,71 +192,71 @@ func (t *mapperHandler) _selectsBean(mapperId string, pb *paramBean, args ...any
 	return
 }
 
-func (t *mapperHandler) Insert(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) InsertDirect(mapperId string, args ...any) (r int64, err error) {
 	var pb *paramBean
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nINSERT SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nInsertDirect SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) InsertAny(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) Insert(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nINSERT SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nInsert SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Update(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) UpdateDirect(mapperId string, args ...any) (r int64, err error) {
 	var pb *paramBean
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nUPDATE SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nUpdateDirect SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) UpdateAny(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) Update(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nUPDATE SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nUpdate SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Delete(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) DeleteDirect(mapperId string, args ...any) (r int64, err error) {
 	var pb *paramBean
 	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nDELETE SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nDeleteDirect SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) DeleteAny(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) Delete(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
-		Logger.Debug("[Mapper Id] "+mapperId+" \nDELETE SQL["+pb.sql+"]ARGS", args)
+		Logger.Debug("[Mapper Id] "+mapperId+" \nDelete SQL["+pb.sql+"]ARGS", args)
 	}
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
@@ -278,12 +290,12 @@ func init() {
 	UseDBhandleWithDB = defaultMapperHandler.UseDBhandleWithDB
 
 	SelectBean = defaultMapperHandler.SelectBean
-	SelectsBean = defaultMapperHandler.SelectsBean
+	SelectBeans = defaultMapperHandler.SelectBeans
+	InsertDirect = defaultMapperHandler.InsertDirect
+	UpdateDirect = defaultMapperHandler.UpdateDirect
+	DeleteDirect = defaultMapperHandler.DeleteDirect
+
 	Insert = defaultMapperHandler.Insert
 	Update = defaultMapperHandler.Update
 	Delete = defaultMapperHandler.Delete
-
-	InsertAny = defaultMapperHandler.InsertAny
-	UpdateAny = defaultMapperHandler.UpdateAny
-	DeleteAny = defaultMapperHandler.DeleteAny
 }
