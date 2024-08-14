@@ -21,9 +21,9 @@ type TableBase[T any] interface {
 type DBhandle interface {
 	GetTransaction() (r Transaction, err error)
 
-	ExecuteQueryBeans(sql string, args ...any) ([]*DataBean, error)
+	ExecuteQueryBean(sql string, args ...any) *DataBean
 
-	ExecuteQueryBean(sql string, args ...any) (*DataBean, error)
+	ExecuteQueryBeans(sql string, args ...any) *DataBeans
 
 	ExecuteUpdate(sql string, args ...any) (int64, error)
 
@@ -32,6 +32,18 @@ type DBhandle interface {
 	GetDBType() DBType
 
 	GetDB() *sql.DB
+
+	Close() error
+}
+
+type Scanner interface {
+	Scan(fieldname string, value any)
+
+	// ToGdao
+	// : when don't create an object by calling a New method of the standardized entity class,
+	// but by using some other method such as the new keyword, then should call the ToGdao function,
+	// which initializes the relevant data for database operations
+	ToGdao()
 }
 
 var MapperPre = string(util.Base58EncodeForInt64(uint64(util.RandId())))
