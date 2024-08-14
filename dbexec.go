@@ -45,6 +45,7 @@ func executeQueryBeans(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (data
 					databean.Put(columntype.Name(), i, fb)
 				}
 				if err = rows.Scan(buff...); err != nil {
+					databean.SetError(err)
 					return
 				}
 				databases = append(databases, databean)
@@ -86,6 +87,7 @@ func executeQueryBean(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (dataB
 					dataBean.Put(columntype.Name(), i, fb)
 				}
 				if err = rows.Scan(buff...); err != nil {
+					dataBean.SetError(err)
 					return
 				}
 			}
