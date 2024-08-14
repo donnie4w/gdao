@@ -64,12 +64,12 @@ func (x *tx) ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error) {
 	return x.gdbc.ExecuteBatch(sqlstr, args)
 }
 
-func (x *tx) ExecuteQueryBeans(sqlstr string, args ...any) ([]*DataBean, error) {
-	return x.gdbc.ExecuteQueryBeans(sqlstr, args...)
+func (x *tx) ExecuteQueryBean(sqlstr string, args ...any) *DataBean {
+	return x.gdbc.ExecuteQueryBean(sqlstr, args...)
 }
 
-func (x *tx) ExecuteQueryBean(sqlstr string, args ...any) (*DataBean, error) {
-	return x.gdbc.ExecuteQueryBean(sqlstr, args...)
+func (x *tx) ExecuteQueryBeans(sqlstr string, args ...any) (r *DataBeans) {
+	return x.gdbc.ExecuteQueryBeans(sqlstr, args...)
 }
 
 func NewTransaction() (r Transaction, err error) {
