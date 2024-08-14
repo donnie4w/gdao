@@ -9,7 +9,6 @@ package gdaoMapper
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/donnie4w/gdao/base"
 )
 
@@ -24,14 +23,14 @@ type GdaoMapper interface {
 	UseDBhandle(dbhandler base.DBhandle)
 	UseDBhandleWithDB(db *sql.DB, dbType base.DBType)
 
-	// SelectBean executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
+	// SelectBeanDirect executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
 	//	 args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
 	//
 	// Returns:
-	//   A pointer to a DataBean containing the data retrieved by the query, or an error if the query fails.
+	//   A pointer to a DataBean containing the data retrieved by the query.
 	//
 	// Description:
 	//   This function executes a query based on the specified XML mapping mapper ID and returns a single row of data.
@@ -40,20 +39,20 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUserById" is the ID of the CRUD operation within the namespace
-	//   userBean, err := gdaoMapper.SelectBean("com.example.mappers.users.getUserById", 1)
+	//   userBean, err := gdaoMapper.SelectBeanDirect("com.example.mappers.users.getUserById", 1)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select user: %v", err)
 	//   }
-	SelectBean(mapperId string, args ...any) (*base.DataBean, error)
+	SelectBeanDirect(mapperId string, args ...any) *base.DataBean
 
-	// SelectsBean executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
+	// SelectBeansDirect executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
 	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
 	//
 	// Returns:
-	//   A slice of pointers to DataBeans containing the data retrieved by the query, or an error if the query fails.
+	//   A slice of pointers to DataBeans containing the data retrieved by the query.
 	//
 	// Description:
 	//   This function executes a query based on the specified XML mapping mapper ID and returns multiple rows of data.
@@ -62,14 +61,14 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUsersByLimit" is the ID of the CRUD operation within the namespace
-	//   usersBeans, err := gdaoMapper.SelectsBean("com.example.mappers.users.getUsersByLimit", 10)
+	//   usersBeans, err := gdaoMapper.SelectBeansDirect("com.example.mappers.users.getUsersByLimit", 10)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select users: %v", err)
 	//   }
 	//
-	SelectsBean(mapperId string, args ...any) ([]*base.DataBean, error)
+	SelectBeansDirect(mapperId string, args ...any) *base.DataBeans
 
-	// Insert executes an insert operation based on the specified XML mapping mapper ID.
+	// InsertDirect executes an insert operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -84,13 +83,13 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "insertUser" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.Insert("com.example.mappers.users.insertUser", 1,"hello world",100)
+	//   rowsAffected, err := gdaoMapper.InsertDirect("com.example.mappers.users.insertUser", 1,"hello world",100)
 	//   if err != nil {
 	//       log.Fatalf("Failed to insert user: %v", err)
 	//   }
-	Insert(mapperId string, args ...any) (int64, error)
+	InsertDirect(mapperId string, args ...any) (int64, error)
 
-	// Update executes an update operation based on the specified XML mapping mapper ID.
+	// UpdateDirect executes an update operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -105,13 +104,13 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "updateUserByEmail" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.Update("com.example.mappers.users.updateUserByEmail","hello world" ,"donnie4w@gmail.com")
+	//   rowsAffected, err := gdaoMapper.UpdateDirect("com.example.mappers.users.updateUserByEmail","hello world" ,"donnie4w@gmail.com")
 	//   if err != nil {
 	//       log.Fatalf("Failed to update user: %v", err)
 	//   }
-	Update(mapperId string, args ...any) (int64, error)
+	UpdateDirect(mapperId string, args ...any) (int64, error)
 
-	// Delete executes a delete operation based on the specified XML mapping mapper ID.
+	// DeleteDirect executes a delete operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -126,20 +125,20 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "deleteUserById" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.Delete("com.example.mappers.users.deleteUserById", 1)
+	//   rowsAffected, err := gdaoMapper.DeleteDirect("com.example.mappers.users.deleteUserById", 1)
 	//   if err != nil {
 	//       log.Fatalf("Failed to delete user: %v", err)
 	//   }
-	Delete(mapperId string, args ...any) (int64, error)
+	DeleteDirect(mapperId string, args ...any) (int64, error)
 
-	// SelectsAny executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
+	// SelectBeans executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
 	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice, depending on the requirements of the query.
 	//
 	// Returns:
-	//   A slice of pointers to DataBeans containing the data retrieved by the query, or an error if the query fails.
+	//   A slice of pointers to DataBeans containing the data retrieved by the query.
 	//
 	// Description:
 	//   This function executes a query based on the specified XML mapping mapper ID and returns multiple rows of data.
@@ -148,21 +147,21 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUsersByLimit" is the ID of the CRUD operation within the namespace
-	//   usersBeans, err := gdaoMapper.SelectsAny("com.example.mappers.users.getUsersByLimit", 10)
+	//   usersBeans, err := gdaoMapper.SelectBeans("com.example.mappers.users.getUsersByLimit", 10)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select users: %v", err)
 	//   }
 	//
-	SelectsAny(mapperId string, parameter any) (r []*base.DataBean, err error)
+	SelectBeans(mapperId string, parameter any) *base.DataBeans
 
-	// SelectAny executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
+	// SelectBean executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
 	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice, depending on the requirements of the query.
 	//
 	// Returns:
-	//   A pointer to a DataBean containing the data retrieved by the query, or an error if the query fails.
+	//   A pointer to a DataBean containing the data retrieved by the query.
 	//
 	// Description:
 	//   This function executes a query based on the specified XML mapping mapper ID and returns a single row of data.
@@ -171,13 +170,13 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUserById" is the ID of the CRUD operation within the namespace
-	//   userBean, err := gdaoMapper.SelectAny("com.example.mappers.users.getUserById", 1)
+	//   userBean, err := gdaoMapper.SelectBean("com.example.mappers.users.getUserById", 1)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select user: %v", err)
 	//   }
-	SelectAny(mapperId string, parameter any) (r *base.DataBean, err error)
+	SelectBean(mapperId string, parameter any) *base.DataBean
 
-	// InsertAny executes an insert operation based on the specified XML mapping mapper ID.
+	// Insert executes an insert operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -194,13 +193,13 @@ type GdaoMapper interface {
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "insertUser" is the ID of the CRUD operation within the namespace
 	//   // And "newUser" is the user object to insert
-	//   rowsAffected, err := gdaoMapper.InsertAny("com.example.mappers.users.insertUser", newUser)
+	//   rowsAffected, err := gdaoMapper.Insert("com.example.mappers.users.insertUser", newUser)
 	//   if err != nil {
 	//       log.Fatalf("Failed to insert user: %v", err)
 	//   }
-	InsertAny(mapperId string, parameter any) (int64, error)
+	Insert(mapperId string, parameter any) (int64, error)
 
-	// UpdateAny executes an update operation based on the specified XML mapping mapper ID.
+	// Update executes an update operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -217,13 +216,13 @@ type GdaoMapper interface {
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "updateUserByEmail" is the ID of the CRUD operation within the namespace
 	//   // And "userToUpdate" is the user object with updated fields
-	//   rowsAffected, err := gdaoMapper.UpdateAny("com.example.mappers.users.updateUserByEmail", userToUpdate)
+	//   rowsAffected, err := gdaoMapper.Update("com.example.mappers.users.updateUserByEmail", userToUpdate)
 	//   if err != nil {
 	//       log.Fatalf("Failed to update user: %v", err)
 	//   }
-	UpdateAny(mapperId string, parameter any) (int64, error)
+	Update(mapperId string, parameter any) (int64, error)
 
-	// DeleteAny executes a delete operation based on the specified XML mapping mapper ID.
+	// Delete executes a delete operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -239,11 +238,11 @@ type GdaoMapper interface {
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "deleteUserById" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.DeleteAny("com.example.mappers.users:deleteUserById", 1)
+	//   rowsAffected, err := gdaoMapper.Delete("com.example.mappers.users:deleteUserById", 1)
 	//   if err != nil {
 	//       log.Fatalf("Failed to delete user: %v", err)
 	//   }
-	DeleteAny(mapperId string, parameter any) (int64, error)
+	Delete(mapperId string, parameter any) (int64, error)
 }
 
 var (
@@ -255,14 +254,14 @@ var (
 	UseDBhandle       func(dbhandler base.DBhandle)
 	UseDBhandleWithDB func(db *sql.DB, dbType base.DBType)
 
-	// SelectBean executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
+	// SelectBeanDirect executes a query based on the specified XML mapping mapper ID and returns a single row of data as a DataBean.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
 	//	 args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
 	//
 	// Returns:
-	//   A pointer to a DataBean containing the data retrieved by the query, or an error if the query fails.
+	//   A pointer to a DataBean containing the data retrieved by the query.
 	//
 	// Description:
 	//   This function executes a query based on the specified XML mapping mapper ID and returns a single row of data.
@@ -271,13 +270,15 @@ var (
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUserById" is the ID of the CRUD operation within the namespace
-	//   userBean, err := gdaoMapper.SelectBean("com.example.mappers.users.getUserById", 1)
+	//   userBean, err := gdaoMapper.SelectBeanDirect("com.example.mappers.users.getUserById", 1)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select user: %v", err)
 	//   }
-	SelectBean func(mapperId string, args ...any) (r *base.DataBean, err error)
+	SelectBeanDirect func(mapperId string, args ...any) *base.DataBean
 
-	// SelectsBean executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
+	SelectBean func(mapperId string, parameter any) *base.DataBean
+
+	// SelectBeansDirect executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as DataBeans.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
@@ -293,18 +294,84 @@ var (
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "getUsersByLimit" is the ID of the CRUD operation within the namespace
-	//   usersBeans, err := gdaoMapper.SelectsBean("com.example.mappers.users.getUsersByLimit", 10)
+	//   usersBeans, err := gdaoMapper.SelectBeansDirect("com.example.mappers.users.getUsersByLimit", 10)
 	//   if err != nil {
 	//       log.Fatalf("Failed to select users: %v", err)
 	//   }
 	//
-	SelectsBean func(mapperId string, args ...any) (r []*base.DataBean, err error)
+	SelectBeansDirect func(mapperId string, args ...any) *base.DataBeans
+
+	SelectBeans func(mapperId string, parameter any) *base.DataBeans
+
+	// InsertDirect executes an insert operation based on the specified XML mapping mapper ID.
+	//
+	// Parameters:
+	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
+	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//
+	// Returns:
+	//   The number of rows affected by the insert operation as an int64, or an error if the operation fails.
+	//
+	// Description:
+	//   This function executes an insert operation based on the specified XML mapping mapper ID.
+	//
+	// Example:
+	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
+	//   // And "insertUser" is the ID of the CRUD operation within the namespace
+	//   // And "newUser" is the user object to insert
+	//   rowsAffected, err := gdaoMapper.InsertDirect("com.example.mappers.users.insertUser", newUser)
+	//   if err != nil {
+	//       log.Fatalf("Failed to insert user: %v", err)
+	//   }
+	InsertDirect func(mapperId string, args ...any) (r int64, err error)
+
+	// UpdateDirect executes an update operation based on the specified XML mapping mapper ID.
+	//
+	// Parameters:
+	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
+	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//
+	// Returns:
+	//   The number of rows affected by the update operation as an int64, or an error if the operation fails.
+	//
+	// Description:
+	//   This function executes an update operation based on the specified XML mapping mapper ID.
+	//
+	// Example:
+	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
+	//   // And "updateUser" is the ID of the CRUD operation within the namespace
+	//   rowsAffected, err := gdaoMapper.UpdateDirect("com.example.mappers.users.updateUser", 10)
+	//   if err != nil {
+	//       log.Fatalf("Failed to insert user: %v", err)
+	//   }
+	UpdateDirect func(mapperId string, args ...any) (r int64, err error)
+
+	// DeleteDirect executes an delete operation based on the specified XML mapping mapper ID.
+	//
+	// Parameters:
+	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
+	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//
+	// Returns:
+	//   The number of rows affected by the delete operation as an int64, or an error if the operation fails.
+	//
+	// Description:
+	//   This function executes an delete operation based on the specified XML mapping mapper ID.
+	//
+	// Example:
+	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
+	//   // And "deleteUser" is the ID of the CRUD operation within the namespace
+	//   rowsAffected, err := gdaoMapper.DeleteDirect("com.example.mappers.users.deleteUser", 10)
+	//   if err != nil {
+	//       log.Fatalf("Failed to insert user: %v", err)
+	//   }
+	DeleteDirect func(mapperId string, args ...any) (r int64, err error)
 
 	// Insert executes an insert operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
 	//
 	// Returns:
 	//   The number of rows affected by the insert operation as an int64, or an error if the operation fails.
@@ -320,13 +387,13 @@ var (
 	//   if err != nil {
 	//       log.Fatalf("Failed to insert user: %v", err)
 	//   }
-	Insert func(mapperId string, args ...any) (r int64, err error)
+	Insert func(mapperId string, parameter any) (r int64, err error)
 
 	// Update executes an update operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
 	//
 	// Returns:
 	//   The number of rows affected by the update operation as an int64, or an error if the operation fails.
@@ -337,17 +404,17 @@ var (
 	// Example:
 	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 	//   // And "updateUser" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.Update("com.example.mappers.users.updateUser", 10)
+	//   rowsAffected, err := gdaoMapper.Update("com.example.mappers.users.updateUser", []any{"hello world",10})
 	//   if err != nil {
 	//       log.Fatalf("Failed to insert user: %v", err)
 	//   }
-	Update func(mapperId string, args ...any) (r int64, err error)
+	Update func(mapperId string, parameter any) (r int64, err error)
 
 	// Delete executes an delete operation based on the specified XML mapping mapper ID.
 	//
 	// Parameters:
 	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   args: Variable length argument list, which corresponds to placeholder arguments of mapperId.
+	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
 	//
 	// Returns:
 	//   The number of rows affected by the delete operation as an int64, or an error if the operation fails.
@@ -362,74 +429,10 @@ var (
 	//   if err != nil {
 	//       log.Fatalf("Failed to insert user: %v", err)
 	//   }
-	Delete func(mapperId string, args ...any) (r int64, err error)
-
-	// InsertAny executes an insert operation based on the specified XML mapping mapper ID.
-	//
-	// Parameters:
-	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
-	//
-	// Returns:
-	//   The number of rows affected by the insert operation as an int64, or an error if the operation fails.
-	//
-	// Description:
-	//   This function executes an insert operation based on the specified XML mapping mapper ID.
-	//
-	// Example:
-	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
-	//   // And "insertUser" is the ID of the CRUD operation within the namespace
-	//   // And "newUser" is the user object to insert
-	//   rowsAffected, err := gdaoMapper.InsertAny("com.example.mappers.users.insertUser", newUser)
-	//   if err != nil {
-	//       log.Fatalf("Failed to insert user: %v", err)
-	//   }
-	InsertAny func(mapperId string, parameter any) (r int64, err error)
-
-	// UpdateAny executes an update operation based on the specified XML mapping mapper ID.
-	//
-	// Parameters:
-	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
-	//
-	// Returns:
-	//   The number of rows affected by the update operation as an int64, or an error if the operation fails.
-	//
-	// Description:
-	//   This function executes an update operation based on the specified XML mapping mapper ID.
-	//
-	// Example:
-	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
-	//   // And "updateUser" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.UpdateAny("com.example.mappers.users.updateUser", []any{"hello world",10})
-	//   if err != nil {
-	//       log.Fatalf("Failed to insert user: %v", err)
-	//   }
-	UpdateAny func(mapperId string, parameter any) (r int64, err error)
-
-	// DeleteAny executes an delete operation based on the specified XML mapping mapper ID.
-	//
-	// Parameters:
-	//   mapperId: The ID of the CRUD operation within the XML mapping namespace.
-	//   parameter: The parameter to pass to the query. Can be a basic data type, an entity class object, a map, or a slice.
-	//
-	// Returns:
-	//   The number of rows affected by the delete operation as an int64, or an error if the operation fails.
-	//
-	// Description:
-	//   This function executes an delete operation based on the specified XML mapping mapper ID.
-	//
-	// Example:
-	//   // Assuming "com.example.mappers.users" is the namespace in the XML mapping files
-	//   // And "deleteUser" is the ID of the CRUD operation within the namespace
-	//   rowsAffected, err := gdaoMapper.DeleteAny("com.example.mappers.users.deleteUser", 10)
-	//   if err != nil {
-	//       log.Fatalf("Failed to insert user: %v", err)
-	//   }
-	DeleteAny func(mapperId string, parameter any) (r int64, err error)
+	Delete func(mapperId string, parameter any) (r int64, err error)
 )
 
-// Select executes a query based on the specified XML mapping mapper ID and returns a single row of data as an instance of the generic type T.
+// SelectDirect executes a query based on the specified XML mapping mapper ID and returns a single row of data as an instance of the generic type T.
 //
 // Parameters:
 //
@@ -449,15 +452,15 @@ var (
 //
 //	// Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 //	// And "getUserById" is the ID of the CRUD operation within the namespace
-//	userResult, err := gdaoMapper.Select[dao.User]("com.example.mappers.users.getUserById", 1)
+//	userResult, err := gdaoMapper.SelectDirect[dao.User]("com.example.mappers.users.getUserById", 1)
 //	if err != nil {
 //	    log.Fatalf("Failed to select user: %v", err)
 //	}
-func Select[T any](mapperId string, args ...any) (*T, error) {
-	return (*mapperInvoke[T])(defaultMapperHandler).Select(mapperId, args...)
+func SelectDirect[T any](mapperId string, args ...any) (*T, error) {
+	return (*mapperInvoke[T])(defaultMapperHandler).SelectDirect(mapperId, args...)
 }
 
-// SelectAny executes a query based on the specified XML mapping mapper ID and returns a single row of data as an instance of the generic type T.
+// Select executes a query based on the specified XML mapping mapper ID and returns a single row of data as an instance of the generic type T.
 //
 // Parameters:
 //
@@ -480,15 +483,15 @@ func Select[T any](mapperId string, args ...any) (*T, error) {
 //	// Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 //	// And "getUserById" is the ID of the CRUD operation within the namespace
 //
-//	userResult, err := gdaoMapper.SelectAny[dao.User]("com.example.mappers.users.getUserById", 1)
+//	userResult, err := gdaoMapper.Select[dao.User]("com.example.mappers.users.getUserById", 1)
 //	if err != nil {
 //	    log.Fatalf("Failed to select user: %v", err)
 //	}
-func SelectAny[T any](mapperId string, parameter any) (*T, error) {
-	return (*mapperInvoke[T])(defaultMapperHandler).SelectAny(mapperId, parameter)
+func Select[T any](mapperId string, parameter any) (*T, error) {
+	return (*mapperInvoke[T])(defaultMapperHandler).Select(mapperId, parameter)
 }
 
-// Selects executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as instances of the generic type T.
+// SelectsDirect executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as instances of the generic type T.
 //
 // Parameters:
 //
@@ -508,15 +511,15 @@ func SelectAny[T any](mapperId string, parameter any) (*T, error) {
 //
 //	// Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 //	// And "getUsersByLimit" is the ID of the CRUD operation within the namespace
-//	usersResult, err := gdaoMapper.Selects[dao.User]("com.example.mappers.users.getUsersByLimit", 10)
+//	usersResult, err := gdaoMapper.SelectsDirect[dao.User]("com.example.mappers.users.getUsersByLimit", 10)
 //	if err != nil {
 //	    log.Fatalf("Failed to select users: %v", err)
 //	}
-func Selects[T any](mapperId string, args ...any) ([]*T, error) {
-	return (*mapperInvoke[T])(defaultMapperHandler).Selects(mapperId, args...)
+func SelectsDirect[T any](mapperId string, args ...any) ([]*T, error) {
+	return (*mapperInvoke[T])(defaultMapperHandler).SelectsDirect(mapperId, args...)
 }
 
-// SelectsAny executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as instances of the generic type T.
+// Selects executes a query based on the specified XML mapping mapper ID and returns multiple rows of data as instances of the generic type T.
 //
 // Parameters:
 //
@@ -537,38 +540,39 @@ func Selects[T any](mapperId string, args ...any) ([]*T, error) {
 //
 //	// Assuming "com.example.mappers.users" is the namespace in the XML mapping files
 //	// And "getUsersByLimit" is the ID of the CRUD operation within the namespace
-//	usersResult, err := gdaoMapper.SelectsAny[dao.User]("com.example.mappers.users.getUsersByLimit", 10)
+//	usersResult, err := gdaoMapper.Selects[dao.User]("com.example.mappers.users.getUsersByLimit", 10)
 //	if err != nil {
 //	    log.Fatalf("Failed to select users: %v", err)
 //	}
-func SelectsAny[T any](mapperId string, parameter any) ([]*T, error) {
-	return (*mapperInvoke[T])(defaultMapperHandler).SelectsAny(mapperId, parameter)
+func Selects[T any](mapperId string, parameter any) ([]*T, error) {
+	return (*mapperInvoke[T])(defaultMapperHandler).Selects(mapperId, parameter)
 }
 
-func SelectWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) (*T, error) {
-	if v, ok := gdaomapper.(*mapperHandler); ok {
-		return (*mapperInvoke[T])(v).Select(mapperId, args...)
-	}
-	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
-}
+//func SelectWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) (*T, error) {
+//	if v, ok := gdaomapper.(*mapperHandler); ok {
+//		return (*mapperInvoke[T])(v).Select(mapperId, args...)
+//	}
+//	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
+//}
 
-func SelectAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) (*T, error) {
-	if v, ok := gdaomapper.(*mapperHandler); ok {
-		return (*mapperInvoke[T])(v).SelectAny(mapperId, parameter)
-	}
-	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
-}
-
-func SelectsWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) ([]*T, error) {
-	if v, ok := gdaomapper.(*mapperHandler); ok {
-		return (*mapperInvoke[T])(v).Selects(mapperId, args...)
-	}
-	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
-}
-
-func SelectsAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) ([]*T, error) {
-	if v, ok := gdaomapper.(*mapperHandler); ok {
-		return (*mapperInvoke[T])(v).SelectsAny(mapperId, parameter)
-	}
-	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
-}
+//
+//func SelectAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) (*T, error) {
+//	if v, ok := gdaomapper.(*mapperHandler); ok {
+//		return (*mapperInvoke[T])(v).SelectAny(mapperId, parameter)
+//	}
+//	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
+//}
+//
+//func SelectsWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, args ...any) ([]*T, error) {
+//	if v, ok := gdaomapper.(*mapperHandler); ok {
+//		return (*mapperInvoke[T])(v).Selects(mapperId, args...)
+//	}
+//	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
+//}
+//
+//func SelectsAnyWithGdaoMapper[T any](gdaomapper GdaoMapper, mapperId string, parameter any) ([]*T, error) {
+//	if v, ok := gdaomapper.(*mapperHandler); ok {
+//		return (*mapperInvoke[T])(v).SelectsAny(mapperId, parameter)
+//	}
+//	return nil, fmt.Errorf("gdaomapper is not a MapperHandler pointer")
+//}
