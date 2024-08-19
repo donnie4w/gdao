@@ -9,13 +9,24 @@ package base
 
 import (
 	"fmt"
+	"github.com/donnie4w/gofer/pool/buffer"
 	"time"
 )
 
 type FieldBeen struct {
-	FieldName  string
-	FieldIndex int
 	FieldValue *any
+}
+
+var fieldBeenPool = buffer.NewPool[FieldBeen](func() *FieldBeen {
+	return new(FieldBeen)
+}, nil)
+
+func NewFieldBeen() *FieldBeen {
+	return fieldBeenPool.Get()
+}
+
+func (f *FieldBeen) free() {
+	fieldBeenPool.Put(&f)
 }
 
 func (f *FieldBeen) Value() (r any) {
@@ -99,16 +110,4 @@ func (f *FieldBeen) ValueBool() bool {
 		return false
 	}
 	return AsBool(*f.FieldValue)
-}
-
-func (f *FieldBeen) Name() string {
-	return f.FieldName
-}
-
-func (f *FieldBeen) Index() int {
-	return f.FieldIndex
-}
-
-func (f *FieldBeen) String() string {
-	return fmt.Sprint("[", f.FieldName, ":", f.Value(), "]")
 }
