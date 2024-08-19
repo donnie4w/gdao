@@ -13,8 +13,6 @@ import (
 
 type GStruct[P any, T any] interface {
 	Scanner
-	TableBase[T]
-
 	// UseCache use default gdaoCache or not use cache
 	UseCache(use bool)
 
@@ -82,6 +80,6 @@ type GStruct[P any, T any] interface {
 	// Decode deserialization
 	Decode(bs []byte) (err error)
 	String() string
-	// TABLENAME return table name
-	TABLENAME() string
+	// TableName return table name
+	TableName() string
 }
