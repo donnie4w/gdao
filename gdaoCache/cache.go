@@ -12,15 +12,15 @@ import (
 	"github.com/donnie4w/gdao/util"
 )
 
-func BindClass[T base.TableBase[T]]() {
+func BindClass[T base.TableClass]() {
 	gdaocache.Bind(util.Classname[T]())
 }
 
-func BindClassWithCacheHandle[T base.TableBase[T]](cacheHandle *CacheHandle) {
+func BindClassWithCacheHandle[T base.TableClass](cacheHandle *CacheHandle) {
 	gdaocache.BindWithCacheHandle(util.Classname[T](), cacheHandle)
 }
 
-func UnbindClass[T base.TableBase[T]]() {
+func UnbindClass[T base.TableClass]() {
 	gdaocache.Unbind(util.Classname[T]())
 }
 
@@ -191,6 +191,46 @@ func GetDomain(classname, tablename string) string {
 	return gdaocache.GetDomain(classname, tablename)
 }
 
+func ClearClass[T base.TableClass]() (r bool) {
+	t := new(T)
+	tablename := ""
+	if scaner, ok := any(t).(base.Scanner); ok {
+		scaner.ToGdao()
+	} else {
+		return
+	}
+	if table, ok := any(t).(base.TableBase); ok {
+		tablename = table.TableName()
+	} else {
+		return
+	}
+	classname := util.Classname[T]()
+	if domain := GetDomain(classname, tablename); domain != "" {
+		if b := gdaocache.Clear(domain, classname); b {
+			r = true
+		}
+	}
+	if domain := GetDomain("", tablename); domain != "" {
+		if b := gdaocache.Clear(domain, classname); b {
+			r = true
+		}
+	}
+	if base.Logger.IsVaild {
+		base.Logger.Debug("[CLEAR CACHE][TABLENAME:", tablename, "]")
+	}
+	return
+}
+
+func ClearMapper(namespace, id string) (b bool) {
+	domain := GetMapperDomain(namespace, id)
+	if b = gdaocache.ClearMapper(domain, namespace, id); b {
+		if base.Logger.IsVaild {
+			base.Logger.Debug("[CLEAR CACHE MAPPER][NAMESPACE:", namespace, ",ID:", id, "]")
+		}
+	}
+	return
+}
+
 type cache interface {
 	Bind(tablename string)
 
@@ -221,4 +261,8 @@ type cache interface {
 	GetMapperDomain(namespace, id string) string
 
 	GetDomain(classname, tablename string) string
+
+	Clear(domain string, cacheId string) bool
+
+	ClearMapper(domain string, namespace, id string) bool
 }
