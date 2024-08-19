@@ -11,6 +11,8 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"strings"
+	"unicode"
 )
 
 var nullTimeType = reflect.TypeOf(sql.NullTime{})
@@ -140,4 +142,10 @@ func aslog(tableName, tableAlias string) string {
 		return fmt.Sprint("["+tableName+" ]As[", tableAlias, " ]")
 	}
 	return tableName
+}
+
+func trimNonLetterPrefix(s string) string {
+	return strings.TrimLeftFunc(s, func(r rune) bool {
+		return !unicode.IsLetter(r)
+	})
 }
