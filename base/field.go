@@ -16,6 +16,10 @@ type Field[T any] struct {
 	FieldName string
 }
 
+func (f *Field[T]) Name() string {
+	return f.FieldName
+}
+
 func (f *Field[T]) EQ(arg any) *Where[T] {
 	return &Where[T]{f.FieldName + "=?", arg, nil}
 }
