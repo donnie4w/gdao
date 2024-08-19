@@ -10,8 +10,8 @@ package base
 import (
 	"fmt"
 	"github.com/donnie4w/gdao/util"
+	"github.com/donnie4w/gofer/pool/buffer"
 	"reflect"
-	"sort"
 	"strings"
 	"time"
 )
@@ -33,6 +33,14 @@ func (d *DataBeans) GetError() error {
 	return d.err
 }
 
+// Scan copies the data from the DataBeans into the provided variable 'v'.
+// This method is typically used to transfer data out of the DataBean and into
+// another data structure or variable.
+//
+// After calling this method, the data in the DataBeans will be recycled and
+// should not be used anymore. It is the caller's responsibility to ensure that
+// the DataBeans is not accessed after calling Scan, as the internal data may
+// have been cleared or reused for subsequent operations.
 func (d *DataBeans) Scan(v any) error {
 	if d == nil {
 		return nil
@@ -70,21 +78,54 @@ func (d *DataBeans) Scan(v any) error {
 	return nil
 }
 
+var dataBeanPool = buffer.NewPool[DataBean](func() *DataBean {
+	databean := new(DataBean)
+	return databean
+}, func(d *DataBean) {
+	d.reset()
+})
+
 type DataBean struct {
-	FieldMapName  map[string]*FieldBeen
-	FieldMapIndex map[int]*FieldBeen
+	fieldMapName  map[string]*FieldBeen
+	fieldMapIndex []*FieldBeen
 	err           error
 }
 
-func NewDataBean() *DataBean {
-	databean := new(DataBean)
-	databean.FieldMapName = make(map[string]*FieldBeen, 0)
-	databean.FieldMapIndex = make(map[int]*FieldBeen, 0)
-	return databean
+func NewDataBean(length int) *DataBean {
+	r := dataBeanPool.Get()
+	if r.fieldMapName == nil {
+		r.fieldMapName = make(map[string]*FieldBeen, length)
+	}
+	return r
+}
+
+func (g *DataBean) free() {
+	if len(g.fieldMapIndex) > 0 {
+		g.fieldMapIndex = g.fieldMapIndex[:0]
+	}
+	dataBeanPool.Put(&g)
+}
+
+func (g *DataBean) reset() {
+	defer util.Recover(nil)
+	for _, f := range g.fieldMapIndex {
+		f.free()
+	}
+	for k := range g.fieldMapName {
+		delete(g.fieldMapName, k)
+	}
+	g.err = nil
+}
+
+func (g *DataBean) FirstField() *FieldBeen {
+	if len(g.fieldMapIndex) > 0 {
+		return g.fieldMapIndex[0]
+	}
+	return nil
 }
 
 func (g *DataBean) Map() map[string]*FieldBeen {
-	return g.FieldMapName
+	return g.fieldMapName
 }
 
 func (g *DataBean) SetError(err error) {
@@ -95,24 +136,32 @@ func (g *DataBean) GetError() error {
 	return g.err
 }
 
-func (g *DataBean) Put(name string, index int, fb *FieldBeen) {
-	g.FieldMapName[name] = fb
-	g.FieldMapIndex[index] = fb
+func (g *DataBean) Put(name string, fb *FieldBeen) {
+	g.fieldMapName[name] = fb
+	g.fieldMapIndex = append(g.fieldMapIndex, fb)
 }
 
 func (g *DataBean) FieldByName(name string) (_r *FieldBeen) {
-	_r, _ = g.FieldMapName[name]
+	if g.Len() > 0 {
+		defer util.Recover(nil)
+		_r, _ = g.fieldMapName[name]
+	}
 	return
 }
 
 func (g *DataBean) FieldByIndex(index int) (_r *FieldBeen) {
-	_r, _ = g.FieldMapIndex[index]
+	if index > 0 && index <= g.Len() {
+		return g.fieldMapIndex[index-1]
+	}
 	return
 }
 
 func (g *DataBean) ValueByName(name string) (_val any) {
-	if v := g.FieldByName(name); v != nil {
-		return v.Value()
+	if g.Len() > 0 {
+		defer util.Recover(nil)
+		if f, ok := g.fieldMapName[name]; ok {
+			return f.Value()
+		}
 	}
 	return
 }
@@ -125,28 +174,39 @@ func (g *DataBean) ValueByIndex(index int) (_val any) {
 }
 
 func (g *DataBean) String() (r string) {
-	fs := make([]*FieldBeen, 0)
-	for _, fm := range g.FieldMapName {
-		fs = append(fs, fm)
+	sb := []string{}
+	for _, fm := range g.fieldMapIndex {
+		sb = append(sb, fmt.Sprint(fm.Value()))
 	}
-	sort.Slice(fs, func(i, j int) bool { return fs[i].FieldIndex < fs[j].FieldIndex })
-	for _, m := range fs {
-		r += fmt.Sprint(m.String())
-	}
-	return
+	return strings.Join(sb, ",")
 }
 
+// Scan copies the data from the DataBean into the provided variable 'v'.
+// This method is typically used to transfer data out of the DataBean and into
+// another data structure or variable.
+//
+// After calling this method, the data in the DataBean will be recycled and
+// should not be used anymore. It is the caller's responsibility to ensure that
+// the DataBean is not accessed after calling Scan, as the internal data may
+// have been cleared or reused for subsequent operations.
 func (g *DataBean) Scan(v any) (err error) {
 	//defer util.Recover(&err)
 	if g != nil {
 		if g.err != nil {
 			return g.err
 		}
+
+		//if typ, ok := v.(reflect.Type); ok {
+		//	elem := reflect.New(typ).Elem()
+		//	v = elem.Interface()
+		//}
+
 		if scanner, ok := v.(Scanner); ok {
 			scanner.ToGdao()
-			for _, fieldBean := range g.FieldMapName {
-				scanner.Scan(fieldBean.FieldName, fieldBean.Value())
+			for name, fieldBean := range g.fieldMapName {
+				scanner.Scan(name, fieldBean.Value())
 			}
+			g.free()
 			return nil
 			//val := reflect.ValueOf(scanner).Elem()
 			//return val.Addr().Interface().(*T), nil
@@ -172,8 +232,8 @@ func (g *DataBean) Scan(v any) (err error) {
 		if num < g.Len() {
 			for i := 0; i < num; i++ {
 				field := typ.Field(i)
-				fieldName := strings.ToLower(util.DecodeFieldname(field.Name))
-				if value := g.ValueByName(fieldName); value != nil {
+				//fieldName := strings.ToLower(util.DecodeFieldname(field.Name))
+				if value := g.ValueByName(field.Name); value != nil {
 					ScanValue(val.Field(i), value)
 				} else {
 					hasScan = false
@@ -183,8 +243,7 @@ func (g *DataBean) Scan(v any) (err error) {
 		}
 
 		if !hasScan || num >= g.Len() {
-			for _, fieldBean := range g.FieldMapName {
-				fieldName := fieldBean.FieldName
+			for fieldName, fieldBean := range g.fieldMapName {
 				field := val.FieldByNameFunc(func(s string) bool {
 					return strings.EqualFold(s, fieldName)
 				})
@@ -214,6 +273,7 @@ func (g *DataBean) Scan(v any) (err error) {
 				}
 			}
 		}
+		g.free()
 		return
 	}
 	return fmt.Errorf("DataBean is nil")
@@ -221,53 +281,53 @@ func (g *DataBean) Scan(v any) (err error) {
 
 func (g *DataBean) ToInt64() (r int64) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueInt64()
+		r = g.FirstField().ValueInt64()
 	}
 	return
 }
 
 func (g *DataBean) ToUint64() (r uint64) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueUint64()
+		r = g.FirstField().ValueUint64()
 	}
 	return
 }
 
 func (g *DataBean) ToFloat64() (r float64) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueFloat64()
+		r = g.FirstField().ValueFloat64()
 	}
 	return
 }
 
 func (g *DataBean) ToString() (r string) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueString()
+		r = g.FirstField().ValueString()
 	}
 	return
 }
 
 func (g *DataBean) ToBytes() (r []byte) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueBytes()
+		r = g.FirstField().ValueBytes()
 	}
 	return
 }
 
 func (g *DataBean) ToBool() (r bool) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueBool()
+		r = g.FirstField().ValueBool()
 	}
 	return
 }
 
 func (g *DataBean) ToTime() (r time.Time) {
 	if g != nil && g.err == nil && g.Len() > 0 {
-		r = g.FieldMapIndex[0].ValueTime()
+		r = g.FirstField().ValueTime()
 	}
 	return
 }
 
 func (g *DataBean) Len() int {
-	return len(g.FieldMapName)
+	return len(g.fieldMapIndex)
 }
