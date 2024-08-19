@@ -11,7 +11,6 @@ import "strings"
 
 type Column[T any] interface {
 	Name() string
-	Value() any
 }
 
 type Sort[T any] struct {
