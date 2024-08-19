@@ -166,7 +166,7 @@ func toT[T any](databean *base.DataBean) (r *T, err error) {
 		return
 	}
 	var t T
-	field := databean.FieldMapIndex[0]
+	field := databean.FirstField()
 	if field == nil {
 		return nil, nil
 	}
