@@ -11,48 +11,58 @@ import (
 	"database/sql"
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/util"
+	"github.com/donnie4w/gofer/pool/buffer"
 )
+
+var bufpool = buffer.NewPool[[]any](func() *[]any {
+	return nil
+}, func(a *[]any) {
+	*a = (*a)[:0]
+})
+
+func newAnys(length int) (r *[]any) {
+	if r = bufpool.Get(); r == nil {
+		var v []any
+		return &v
+	} else {
+		return r
+	}
+}
 
 func executeQueryBeans(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (databases []*DataBean, err error) {
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
-	defer util.Recover(&err)
-	var stmt *sql.Stmt
+	//defer util.Recover(&err)
+	var rows *sql.Rows
 	if tx != nil {
-		stmt, err = tx.Prepare(sqlstr)
+		rows, err = tx.Query(sqlstr, args...)
 	} else {
-		stmt, err = db.Prepare(sqlstr)
+		rows, err = db.Query(sqlstr, args...)
 	}
 	if err != nil {
 		return nil, err
 	}
-	defer stmt.Close()
-	var rows *sql.Rows
-	if rows, err = stmt.Query(args...); err == nil {
-		defer rows.Close()
-		databases = make([]*DataBean, 0)
-		if types, er := rows.ColumnTypes(); er == nil {
-			for rows.Next() {
-				databean := NewDataBean()
-				buff := make([]any, 0, len(types))
-				for i, columntype := range types {
-					columntype.DatabaseTypeName()
-					fb := new(FieldBeen)
-					fb.FieldName = columntype.Name()
-					fb.FieldIndex = i
-					buff = append(buff, &fb.FieldValue)
-					databean.Put(columntype.Name(), i, fb)
-				}
-				if err = rows.Scan(buff...); err != nil {
-					databean.SetError(err)
-					return
-				}
-				databases = append(databases, databean)
+	defer rows.Close()
+	databases = make([]*DataBean, 0)
+	if names, er := rows.Columns(); er == nil {
+		for rows.Next() {
+			databean := NewDataBean(len(names))
+			buff := newAnys(len(names))
+			for _, name := range names {
+				fb := NewFieldBeen()
+				*buff = append(*buff, &fb.FieldValue)
+				databean.Put(name, fb)
 			}
-		} else {
-			err = er
+			if err = rows.Scan(*buff...); err != nil {
+				databean.SetError(err)
+				return
+			}
+			bufpool.Put(&buff)
+			databases = append(databases, databean)
 		}
+	} else {
+		err = er
 	}
 	return
 }
@@ -61,39 +71,34 @@ func executeQueryBean(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (dataB
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
-	defer util.Recover(&err)
-	var stmt *sql.Stmt
+	//defer util.Recover(&err)
+	var rows *sql.Rows
 	if tx != nil {
-		stmt, err = tx.Prepare(sqlstr)
+		rows, err = tx.Query(sqlstr, args...)
 	} else {
-		stmt, err = db.Prepare(sqlstr)
+		rows, err = db.Query(sqlstr, args...)
 	}
 	if err != nil {
 		return nil, err
 	}
-	defer stmt.Close()
-	var rows *sql.Rows
-	if rows, err = stmt.Query(args...); err == nil {
-		defer rows.Close()
-		if types, er := rows.ColumnTypes(); er == nil {
-			dataBean = NewDataBean()
-			if rows.Next() {
-				buff := make([]any, 0, len(types))
-				for i, columntype := range types {
-					fb := new(FieldBeen)
-					fb.FieldName = columntype.Name()
-					fb.FieldIndex = i
-					buff = append(buff, &fb.FieldValue)
-					dataBean.Put(columntype.Name(), i, fb)
-				}
-				if err = rows.Scan(buff...); err != nil {
-					dataBean.SetError(err)
-					return
-				}
+	defer rows.Close()
+	if names, er := rows.Columns(); er == nil {
+		dataBean = NewDataBean(len(names))
+		if rows.Next() {
+			buff := newAnys(len(names))
+			for _, name := range names {
+				fb := NewFieldBeen()
+				*buff = append(*buff, &fb.FieldValue)
+				dataBean.Put(name, fb)
 			}
-		} else {
-			err = er
+			if err = rows.Scan(*buff...); err != nil {
+				dataBean.SetError(err)
+				return
+			}
+			bufpool.Put(&buff)
 		}
+	} else {
+		err = er
 	}
 	return
 }
