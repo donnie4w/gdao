@@ -14,8 +14,12 @@ import (
 
 const VERSION = "1.1.0"
 
-type TableBase[T any] interface {
-	ClassName()
+type TableBase interface {
+	TableName() string
+}
+
+type TableClass interface {
+	className() string
 }
 
 type DBhandle interface {
