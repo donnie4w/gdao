@@ -15,7 +15,8 @@ import (
 )
 
 type Table[T any] struct {
-	GStruct[*T, T]
+	//GStruct[*T, T]
+	TableClass
 	commentline string
 	tableName   string
 	querySql    string
@@ -40,8 +41,7 @@ type Table[T any] struct {
 
 func (t *Table[T]) Init(s string, columns []Column[T]) {
 	t.tableName = s
-	t.args = make([]any, 0)
-	t.modifymap = make(map[string]any, 0)
+	t.modifymap = map[string]any{}
 	t.columns = columns
 }
 
@@ -59,9 +59,6 @@ func (t *Table[T]) UseCache(use bool) {
 	} else {
 		t.isCache = 2
 	}
-}
-
-func (t Table[T]) ClassName() {
 }
 
 // Where adds a WHERE clause to the query with one or more conditions.
@@ -497,6 +494,6 @@ func (t *Table[T]) UseCommentLine(commentline string) {
 	t.commentline = `/*` + commentline + `*/`
 }
 
-func (t *Table[T]) TABLENAME() string {
+func (t *Table[T]) TableName() string {
 	return t.tableName
 }
