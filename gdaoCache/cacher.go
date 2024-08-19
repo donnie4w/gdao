@@ -270,6 +270,20 @@ func (c *cacher) SetCache(domain string, cacheId string, condition *Condition, v
 	return true
 }
 
+func (c *cacher) Clear(domain string, cacheId string) bool {
+	if cacheHandle, b := c.cacheMap.Get(domain); b {
+		return cacheHandle.mm.Del(cacheId)
+	}
+	return false
+}
+
+func (c *cacher) ClearMapper(domain string, namespace, id string) bool {
+	if cacheHandle, b := c.cacheMap.Get(domain); b {
+		return cacheHandle.mm.Del(mapperId(namespace, id))
+	}
+	return false
+}
+
 var memorymonitor = newMemoryMonitor(0.9, 3*time.Second, 1)
 
 func (c *cacher) ticker() {
@@ -298,11 +312,15 @@ func (c *cacher) ticker() {
 }
 
 func (c *cacher) GetDomain(classname, tablename string) string {
-	if domain, b := c.rmap.Get(classname); b {
-		return domain
+	if classname != "" {
+		if domain, b := c.rmap.Get(classname); b {
+			return domain
+		}
 	}
-	if domain, b := c.rmap.Get(tablename); b {
-		return domain
+	if tablename != "" {
+		if domain, b := c.rmap.Get(tablename); b {
+			return domain
+		}
 	}
 	return ""
 }
