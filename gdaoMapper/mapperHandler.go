@@ -291,6 +291,9 @@ func init() {
 
 	SelectBean = defaultMapperHandler.SelectBean
 	SelectBeans = defaultMapperHandler.SelectBeans
+
+	SelectBeanDirect = defaultMapperHandler.SelectBeanDirect
+	SelectBeansDirect = defaultMapperHandler.SelectBeansDirect
 	InsertDirect = defaultMapperHandler.InsertDirect
 	UpdateDirect = defaultMapperHandler.UpdateDirect
 	DeleteDirect = defaultMapperHandler.DeleteDirect
