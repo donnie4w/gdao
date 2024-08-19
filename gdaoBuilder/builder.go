@@ -77,6 +77,10 @@ func GetTableBean(tablename string, db *sql.DB) (tb *TableBean, err error) {
 	return
 }
 
+func up(s string) string {
+	return strings.ToUpper(trimNonLetterPrefix(s))
+}
+
 func buildstruct(dbtype, dbname, tableName, tableAlias string, packageName string, tableBean *TableBean) string {
 	datetime := time.Now().Format(time.DateTime)
 	ua := util.ToUpperFirstLetter
@@ -121,40 +125,64 @@ import (
 )
 `
 
+	//	for _, bean := range tableBean.Fieldlist {
+	//		log.Println(bean)
+	//		rtype := goPtrType(bean.FieldType)
+	//		structField := strings.ToLower(tableAlias) + "_" + ua(bean.FieldName)
+	//		s := `
+	//type ` + structField + `[T any] struct {
+	//	base.Field[T]
+	//	fieldName  string
+	//	fieldValue ` + rtype + `
+	//}
+	//
+	//func (t *` + structField + `[T]) Name() string {
+	//	return t.fieldName
+	//}
+	//
+	//func (t *` + structField + `[T]) Value() any {
+	//	return t.fieldValue
+	//}
+	//`
+	//		r = r + s
+	//	}
+	var static_ = ""
+	var field_ = ""
+	var field2_ = ""
 	for _, bean := range tableBean.Fieldlist {
 		log.Println(bean)
 		rtype := goPtrType(bean.FieldType)
-		structField := strings.ToLower(tableAlias) + "_" + ua(bean.FieldName)
-		s := `
-type ` + structField + `[T any] struct {
-	base.Field[T]
-	fieldName  string
-	fieldValue ` + rtype + `
-}
+		static_ = static_ + `
+var _` + structName + `_` + up(bean.FieldName) + ` = &base.Field[` + structName + `]{"` + bean.FieldName + `"}`
 
-func (t *` + structField + `[T]) Name() string {
-	return t.fieldName
-}
+		field_ = field_ + `
+	` + up(bean.FieldName) + `      *base.Field[` + structName + `]`
 
-func (t *` + structField + `[T]) Value() any {
-	return t.fieldValue
-}
-`
-		r = r + s
+		field2_ = field2_ + `
+	_` + up(bean.FieldName) + `      ` + rtype
+
+		//	s := `
+		//` + ua(bean.FieldName) + `		*` + strings.ToLower(tableAlias) + "_" + ua(bean.FieldName) + `[` + structName + `]`
+		//	r = r + s
 	}
 
 	r = r + `
 type ` + structName + ` struct {
 	gdao.Table[` + structName + `]
 `
-	for _, bean := range tableBean.Fieldlist {
-		s := `
-	` + ua(bean.FieldName) + `		*` + strings.ToLower(tableAlias) + "_" + ua(bean.FieldName) + `[` + structName + `]`
-		r = r + s
-	}
-	r = r + `
+	//for _, bean := range tableBean.Fieldlist {
+	//	s := `
+	//` + ua(bean.FieldName) + `		*` + strings.ToLower(tableAlias) + "_" + ua(bean.FieldName) + `[` + structName + `]`
+	//	r = r + s
+	//}
+	//r = r + `
+	r = r + field_
+	r = r + field2_ + `
 }
 `
+	r = r + static_ + `
+`
+
 	mustptr := func(t reflect.Type, s string) string {
 		if mustPtr(t) {
 			return s
@@ -169,21 +197,21 @@ type ` + structName + ` struct {
 		s := `
 func (u *` + structName + `) Get` + fieldName + `() (_r ` + rtype + `){
 `
-		s1 := `	if u.` + fieldName + `.fieldValue != nil {
-		_r = ` + mustptr(bean.FieldType, "*") + `u.` + fieldName + `.fieldValue
+		s1 := `	if u._` + up(bean.FieldName) + ` != nil {
+		_r = ` + mustptr(bean.FieldType, "*") + `u._` + up(bean.FieldName) + `
 	}`
 		if mustPtr(bean.FieldType) {
 			s = s + s1
 		} else {
-			s = s + `	_r = ` + mustptr(bean.FieldType, "*") + `u.` + fieldName + `.fieldValue`
+			s = s + `	_r = ` + mustptr(bean.FieldType, "*") + `u._` + up(bean.FieldName)
 		}
 		s = s + `
 	return
 }
 
 func (u *` + structName + `) Set` + fieldName + `(arg ` + rtype + `) *` + structName + `{
-	u.Put0(u.` + fieldName + `.fieldName, arg)
-	u.` + fieldName + `.fieldValue = ` + mustptr(bean.FieldType, "&") + `arg
+	u.Put0(u.` + up(bean.FieldName) + `.FieldName, arg)
+	u._` + up(bean.FieldName) + ` = ` + mustptr(bean.FieldType, "&") + `arg
 	return u
 }
 `
@@ -224,64 +252,19 @@ func (u *` + structName + `) Scan(fieldname string, value any) {
 }
 `
 	columns := ""
-	fields := ""
 	fieldsString := ""
-	columnsStr := ""
 	for i, bean := range tableBean.Fieldlist {
-		columns = columns + "t." + ua(bean.FieldName)
+		columns = columns + "t." + up(bean.FieldName)
 		fieldsString = fieldsString + "\"" + ua(bean.FieldName) + ":\"" + ",t.Get" + ua(bean.FieldName) + "()"
-		fields = fields + ua(bean.FieldName) + ":" + util.EncodeFieldname(bean.FieldName)
-		columnsStr = columnsStr + util.EncodeFieldname(bean.FieldName)
 		if i < len(tableBean.Fieldlist)-1 {
 			columns = columns + ","
 			fieldsString = fieldsString + `, ",",`
-			fields = fields + ","
-			columnsStr = columnsStr + ","
 		}
 	}
 
-	//	selectfunc := `
-	//
-	//func (t *` + structName + `) Selects(columns ...base.Column[` + structName + `]) (_r []*` + structName + `, err error) {
-	//	if columns == nil {
-	//		columns = []base.Column[` + structName + `]{` + columns + `}
-	//	}
-	//	databeans, err := t.ExecuteQueryBeans(columns...)
-	//	if err != nil || len(databeans) == 0 {
-	//		return nil, err
-	//	}
-	//	_r = make([]*` + structName + `, 0)
-	//	for _, beans := range databeans {
-	//		__` + structName + ` := New` + structName + `()
-	//		for name, bean := range beans.Map() {
-	//			__` + structName + `.Scan(name, bean.Value())
-	//		}
-	//		_r = append(_r, __` + structName + `)
-	//	}
-	//	return
-	//}
-	//
-	//func (t *` + structName + `) Select(columns ...base.Column[` + structName + `]) (_r *` + structName + `, err error) {
-	//	if columns == nil {
-	//		columns = []base.Column[` + structName + `]{` + columns + `}
-	//	}
-	//	databean, err := t.ExecuteQueryBean(columns...)
-	//	if err != nil || databean == nil {
-	//		return nil, err
-	//	}
-	//	_r = New` + structName + `()
-	//	for name, bean := range databean.Map() {
-	//		_r.Scan(name, bean.Value())
-	//	}
-	//	return
-	//}
-	//`
-	//	r = r + selectfunc
-
 	r = r + `
 func (t *` + structName + `) ToGdao() {
-	_t := New` + structName + `()
-	*t = *_t
+	t.init("` + tableName + `")
 }
 `
 
@@ -304,26 +287,29 @@ func (t *` + structName + `) String() string {
 `
 	r = r + stringBody
 
-	newfunc := `
-func New` + structName + `(tablename ...string) (_r *` + structName + `) {
-`
+	initbody := `
+func (t *` + structName + `)init(tablename string) {`
 	for _, bean := range tableBean.Fieldlist {
-		structField := strings.ToLower(tableAlias) + "_" + ua(bean.FieldName)
-		varfield := util.EncodeFieldname(bean.FieldName)
 		s := `
-	` + varfield + ` := &` + structField + `[` + structName + `]{fieldName: "` + bean.FieldName + `"}
-	` + varfield + `.Field.FieldName = "` + bean.FieldName + `"
-`
-		newfunc = newfunc + s
+	t.` + up(bean.FieldName) + ` = _` + structName + `_` + up(bean.FieldName)
+		initbody = initbody + s
 	}
 
+	initbody = initbody + `
+	t.Init(tablename, []base.Column[` + structName + `]{` + columns + `})
+}
+`
+	r = r + initbody
+
+	newfunc := `
+func New` + structName + `(tablename ...string) (_r *` + structName + `) {`
 	newfunc = newfunc + `
-	_r = &` + structName + `{` + fields + `}
+	_r = &` + structName + `{}
 	s := "` + tableName + `"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
-	_r.Init(s, []base.Column[` + structName + `]{` + columnsStr + `})
+	_r.init(s)
 	return
 }
 `
