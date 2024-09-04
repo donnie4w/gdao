@@ -10,13 +10,14 @@ package gdao
 import (
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoCache"
+	"github.com/donnie4w/gdao/gdaoStruct"
 	"github.com/donnie4w/gdao/util"
 	"strings"
 )
 
 type Table[T any] struct {
 	//GStruct[*T, T]
-	TableClass
+	gdaoStruct.TableClass
 	commentline string
 	tableName   string
 	querySql    string
