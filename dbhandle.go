@@ -7,7 +7,9 @@
 
 package gdao
 
-import "github.com/donnie4w/gdao/base"
+import (
+	"github.com/donnie4w/gdao/base"
+)
 
 // ExecuteQuery executes an SQL query and returns the parsed results.
 // T is a generic type that represents the specific struct or type the query result should be converted to.
