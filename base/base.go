@@ -12,14 +12,8 @@ import (
 	"github.com/donnie4w/gofer/util"
 )
 
-const VERSION = "1.1.0"
-
 type TableBase interface {
 	TableName() string
-}
-
-type TableClass interface {
-	className() string
 }
 
 type DBhandle interface {
