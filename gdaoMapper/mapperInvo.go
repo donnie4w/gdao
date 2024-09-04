@@ -19,14 +19,18 @@ import (
 type mapperInvoke[T any] mapperHandler
 
 func (m *mapperInvoke[T]) SelectDirect(mapperId string, args ...any) (r *T, er error) {
+	mh := (*mapperHandler)(m)
 	if pb, ok := mapperparser.getParamBean(mapperId); !ok {
 		return nil, fmt.Errorf("Mapper Id not found [%s]", mapperId)
 	} else {
 		if base.Logger.IsVaild {
 			base.Logger.Debug("[Mapper Id] "+mapperId+" \nSelectDirect SQL["+pb.sql+"]ARGS", args)
 		}
-		return _select[T]((*mapperHandler)(m), pb, args...)
+		if pb, args, er = mh.parseParameter2(mapperId, args...); er == nil {
+			return _select[T](mh, pb, args...)
+		}
 	}
+	return
 }
 
 func (m *mapperInvoke[T]) Select(mapperId string, parameter any) (r *T, err error) {
@@ -82,14 +86,18 @@ func _select[T any](mh *mapperHandler, pb *paramBean, args ...any) (r *T, err er
 }
 
 func (m *mapperInvoke[T]) SelectsDirect(mapperId string, args ...any) (r []*T, er error) {
+	mh := (*mapperHandler)(m)
 	if pb, ok := mapperparser.getParamBean(mapperId); !ok {
 		return nil, fmt.Errorf("Mapper Id not found [%s]", mapperId)
 	} else {
 		if base.Logger.IsVaild {
 			base.Logger.Debug("[Mapper Id] "+mapperId+" \nSelectsDirect SQL["+pb.sql+"]ARGS", args)
 		}
-		return selects[T]((*mapperHandler)(m), pb, args...)
+		if pb, args, er = mh.parseParameter2(mapperId, args...); er == nil {
+			return selects[T](mh, pb, args...)
+		}
 	}
+	return
 }
 
 func (m *mapperInvoke[T]) Selects(mapperId string, parameter any) (r []*T, err error) {
