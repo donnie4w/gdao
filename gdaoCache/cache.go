@@ -9,18 +9,19 @@ package gdaoCache
 
 import (
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/gdaoStruct"
 	"github.com/donnie4w/gdao/util"
 )
 
-func BindClass[T base.TableClass]() {
+func BindClass[T gdaoStruct.TableClass]() {
 	gdaocache.Bind(util.Classname[T]())
 }
 
-func BindClassWithCacheHandle[T base.TableClass](cacheHandle *CacheHandle) {
+func BindClassWithCacheHandle[T gdaoStruct.TableClass](cacheHandle *CacheHandle) {
 	gdaocache.BindWithCacheHandle(util.Classname[T](), cacheHandle)
 }
 
-func UnbindClass[T base.TableClass]() {
+func UnbindClass[T gdaoStruct.TableClass]() {
 	gdaocache.Unbind(util.Classname[T]())
 }
 
@@ -191,7 +192,7 @@ func GetDomain(classname, tablename string) string {
 	return gdaocache.GetDomain(classname, tablename)
 }
 
-func ClearClass[T base.TableClass]() (r bool) {
+func ClearClass[T gdaoStruct.TableClass]() (r bool) {
 	t := new(T)
 	tablename := ""
 	if scaner, ok := any(t).(base.Scanner); ok {
