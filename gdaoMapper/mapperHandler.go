@@ -13,6 +13,7 @@ import (
 	"github.com/donnie4w/gdao"
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoCache"
+	"github.com/donnie4w/gdao/util"
 )
 
 type mapperHandler struct {
@@ -81,15 +82,20 @@ func (t *mapperHandler) getDBhandle(namespace, id string, queryType bool) (dbhan
 		return t.dBhandle
 	}
 	if dbhandle = GetMapperDBhandle(namespace, id, queryType); dbhandle == nil {
-		dbhandle = gdao.GetDefaultDBHandle()
+		if dbhandle = gdao.GetDefaultDBHandle(); dbhandle == nil {
+			panic("no available data source could be found")
+		}
 	}
 	return
 }
 
-func (t *mapperHandler) SelectBeanDirect(mapperId string, args ...any) (r *DataBean) {
+func (t *mapperHandler) SelectBean(mapperId string, args ...any) (r *DataBean) {
+	if len(args) == 1 {
+		return t.selectBean(mapperId, args[0])
+	}
 	var pb *paramBean
 	var err error
-	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
+	if pb, args, err = t.parseParameter2(mapperId, args...); err != nil {
 		r = &DataBean{}
 		r.SetError(err)
 		return
@@ -100,7 +106,7 @@ func (t *mapperHandler) SelectBeanDirect(mapperId string, args ...any) (r *DataB
 	return t._selectBean(mapperId, pb, args...)
 }
 
-func (t *mapperHandler) SelectBean(mapperId string, parameter any) (r *DataBean) {
+func (t *mapperHandler) selectBean(mapperId string, parameter any) (r *DataBean) {
 	var pb *paramBean
 	var args []any
 	var err error
@@ -139,10 +145,13 @@ func (t *mapperHandler) _selectBean(mapperId string, pb *paramBean, args ...any)
 	return
 }
 
-func (t *mapperHandler) SelectBeansDirect(mapperId string, args ...any) *DataBeans {
+func (t *mapperHandler) SelectBeans(mapperId string, args ...any) *DataBeans {
+	if len(args) == 1 {
+		return t.selectBeans(mapperId, args[0])
+	}
 	var pb *paramBean
 	var err error
-	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
+	if pb, args, err = t.parseParameter2(mapperId, args...); err != nil {
 		r := &DataBeans{}
 		r.SetError(err)
 		return r
@@ -153,7 +162,7 @@ func (t *mapperHandler) SelectBeansDirect(mapperId string, args ...any) *DataBea
 	return t._selectBeans(mapperId, pb, args...)
 }
 
-func (t *mapperHandler) SelectBeans(mapperId string, parameter any) *DataBeans {
+func (t *mapperHandler) selectBeans(mapperId string, parameter any) *DataBeans {
 	var pb *paramBean
 	var args []any
 	var err error
@@ -192,9 +201,12 @@ func (t *mapperHandler) _selectBeans(mapperId string, pb *paramBean, args ...any
 	return
 }
 
-func (t *mapperHandler) InsertDirect(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Insert(mapperId string, args ...any) (r int64, err error) {
+	if len(args) == 1 {
+		return t.insert(mapperId, args[0])
+	}
 	var pb *paramBean
-	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
+	if pb, args, err = t.parseParameter2(mapperId, args...); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
@@ -203,7 +215,7 @@ func (t *mapperHandler) InsertDirect(mapperId string, args ...any) (r int64, err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Insert(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) insert(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
@@ -215,9 +227,12 @@ func (t *mapperHandler) Insert(mapperId string, parameter any) (r int64, err err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) UpdateDirect(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Update(mapperId string, args ...any) (r int64, err error) {
+	if len(args) == 1 {
+		return t.update(mapperId, args[0])
+	}
 	var pb *paramBean
-	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
+	if pb, args, err = t.parseParameter2(mapperId, args...); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
@@ -226,7 +241,7 @@ func (t *mapperHandler) UpdateDirect(mapperId string, args ...any) (r int64, err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Update(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) update(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
@@ -238,9 +253,12 @@ func (t *mapperHandler) Update(mapperId string, parameter any) (r int64, err err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) DeleteDirect(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Delete(mapperId string, args ...any) (r int64, err error) {
+	if len(args) == 1 {
+		return t.delete(mapperId, args[0])
+	}
 	var pb *paramBean
-	if pb, _, err = t.parseParameter(mapperId, nil); err != nil {
+	if pb, args, err = t.parseParameter2(mapperId, args...); err != nil {
 		return r, err
 	}
 	if Logger.IsVaild {
@@ -249,7 +267,7 @@ func (t *mapperHandler) DeleteDirect(mapperId string, args ...any) (r int64, err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Delete(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) delete(mapperId string, parameter any) (r int64, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
@@ -262,12 +280,33 @@ func (t *mapperHandler) Delete(mapperId string, parameter any) (r int64, err err
 }
 
 func (t *mapperHandler) parseParameter(mapperId string, parameter any) (pb *paramBean, args []any, err error) {
+	defer util.Recover(&err)
 	var ok bool
 	if pb, ok = mapperparser.getParamBean(mapperId); !ok {
 		return nil, nil, fmt.Errorf("Mapper Id not found [%s]", mapperId)
 	}
 	if parameter != nil {
-		args, err = pb.setParameter(parameter)
+		if pb.hasSqlNode() {
+			pb, args = pb.parseSqlNode(parameter)
+		} else {
+			args, err = pb.setParameter(parameter)
+		}
+	}
+	return
+}
+
+func (t *mapperHandler) parseParameter2(mapperId string, _args ...any) (pb *paramBean, args []any, err error) {
+	defer util.Recover(&err)
+	var ok bool
+	if pb, ok = mapperparser.getParamBean(mapperId); !ok {
+		return nil, nil, fmt.Errorf("Mapper Id not found [%s]", mapperId)
+	}
+	if len(_args) > 0 {
+		if pb.hasSqlNode() {
+			pb, args = pb.parseSqlNode2(_args...)
+		} else {
+			args = _args
+		}
 	}
 	return
 }
@@ -291,12 +330,6 @@ func init() {
 
 	SelectBean = defaultMapperHandler.SelectBean
 	SelectBeans = defaultMapperHandler.SelectBeans
-
-	SelectBeanDirect = defaultMapperHandler.SelectBeanDirect
-	SelectBeansDirect = defaultMapperHandler.SelectBeansDirect
-	InsertDirect = defaultMapperHandler.InsertDirect
-	UpdateDirect = defaultMapperHandler.UpdateDirect
-	DeleteDirect = defaultMapperHandler.DeleteDirect
 
 	Insert = defaultMapperHandler.Insert
 	Update = defaultMapperHandler.Update
