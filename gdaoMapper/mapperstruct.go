@@ -32,39 +32,33 @@ type mapperCell struct {
 
 // mapper represents the root element of the  mapper file
 type mapper struct {
-	XMLName   xml.Name  `xml:"mapper"`
-	Namespace string    `xml:"namespace,attr"`
-	Selects   []select_ `xml:"select"`
-	Inserts   []insert  `xml:"insert"`
-	Updates   []update  `xml:"update"`
-	Deletes   []delete  `xml:"delete"`
+	XMLName   xml.Name   `xml:"mapper"`
+	Namespace string     `xml:"namespace,attr"`
+	CrudNodes []CrudNode `xml:",any"`
 }
 
-// Select represents a select statement in the mapper file
-type select_ struct {
-	ID            string `xml:"id,attr"`
-	ResultType    string `xml:"resultType,attr"`
-	ParameterType string `xml:"parameterType,attr,omitempty"`
-	Query         string `xml:",chardata"`
+type CrudNode struct {
+	XMLName       xml.Name     `xml:""`
+	ID            string       `xml:"id,attr"`
+	ResultType    string       `xml:"resultType,attr"`
+	ParameterType string       `xml:"parameterType,attr,omitempty"`
+	Query         string       `xml:",chardata"`
+	Dynamics      []DynamicXml `xml:",any"`
 }
 
-// Insert represents an insert statement in the mapper file
-type insert struct {
-	ID            string `xml:"id,attr"`
-	ParameterType string `xml:"parameterType,attr"`
-	Query         string `xml:",chardata"`
-}
-
-// Update represents an update statement in the mapper file
-type update struct {
-	ID            string `xml:"id,attr"`
-	ParameterType string `xml:"parameterType,attr"`
-	Query         string `xml:",chardata"`
-}
-
-// Delete represents a delete statement in the mapper file
-type delete struct {
-	ID            string `xml:"id,attr"`
-	ParameterType string `xml:"parameterType,attr"`
-	Query         string `xml:",chardata"`
+type DynamicXml struct {
+	XMLName         xml.Name     `xml:""`
+	Test            string       `xml:"test,attr"`
+	Query           string       `xml:",chardata"`
+	Collection      string       `xml:"collection,attr"`
+	Item            string       `xml:"item,attr"`
+	Index           string       `xml:"index,attr"`
+	Open            string       `xml:"open,attr,omitempty"`
+	Close           string       `xml:"close,attr,omitempty"`
+	Separator       string       `xml:"separator,attr,omitempty"`
+	Prefix          string       `xml:"prefix,attr,omitempty"`
+	Suffix          string       `xml:"suffix,attr,omitempty"`
+	PrefixOverrides string       `xml:"prefixOverrides,attr,omitempty"`
+	SuffixOverrides string       `xml:"suffixOverrides,attr,omitempty"`
+	Child           []DynamicXml `xml:",any"`
 }
