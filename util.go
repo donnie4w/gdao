@@ -11,6 +11,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/donnie4w/gdao/base"
+	"reflect"
 	"strconv"
 )
 
@@ -86,4 +87,23 @@ func parseSql(dbtype base.DBType, sqlstr string, args ...any) string {
 		}
 	}
 	return sqlstr
+}
+
+func toArray(arg any) (r []any) {
+	value := reflect.ValueOf(arg)
+	switch value.Kind() {
+	case reflect.Slice, reflect.Array:
+		r = make([]any, value.Len(), value.Len())
+		for i := 0; i < value.Len(); i++ {
+			r[i] = value.Index(i).Interface()
+		}
+	case reflect.Map:
+		r = make([]any, 0)
+		for _, key := range value.MapKeys() {
+			if _, ok := key.Interface().(string); ok {
+				r = append(r, value.MapIndex(key).Interface())
+			}
+		}
+	}
+	return
 }
