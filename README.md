@@ -2,119 +2,89 @@
 
 ### Introduction
 
-Gdao is an innovative persistence layer solution aimed at reducing coding workload, improving productivity, enhancing performance, supporting multi-data source integration, and facilitating data read-write separation. By leveraging Gdao, developers can decrease the amount of code required for the persistence layer by 30% to 50%, establish unified coding standards, minimize errors, and ensure easier maintenance and expansion.
+GDAO is a comprehensive persistence layer solution. Its primary purpose is to reduce coding effort, enhance productivity, improve performance, support the integration of multiple data sources, facilitate read-write separation, and establish a standard for persistence layer programming. By leveraging GDAO effectively, it's possible to reduce the amount of coding required in the persistence layer by 30%, even up to 50%, while simultaneously establishing a unified programming standard for the persistence layer, reducing errors, and making maintenance and expansion easier.
+For Go, GDAO serves a similar role as [Hibernate](https://github.com/hibernate/hibernate-orm) + [MyBatis](https://github.com/mybatis/mybatis-3) do for Java. The GDAO framework combines the abstraction of Hibernate with the flexibility of MyBatis, addressing long-standing pain points in ORM frameworks. For more information about the pain points of Hibernate and MyBatis, refer to the [JDAO usage documentation](https://tlnet.top/jdaodoc).
 
-gdao for go is equivalent to [hibernate](https://github.com/hibernate/hibernate-orm)+[mybatis](https://github.com/mybatis/mybatis-3) for java, the gdao framework combines the abstraction of Hibernate and the flexibility of MyBatis, and solves the pain points of their respective long-standing use on ORM frameworks. Refer to the [jdao usage documentation](https://tlnet.top/jdaoendoc) for pain points between hibernate and mybatis
+GDAO fully implements the core features of MyBatis in Go, achieving the separation of SQL from the application code, and implementing powerful dynamic SQL functionality. It is currently the only ORM in Go that completely separates SQL from the application.
 
-* The GDAO design structure is both concise and rigorous, with all interfaces and functions named descriptively so their purpose is immediately clear.
-* Even if you are new to GDAO, you can quickly understand its code and the associated data behaviors.
-* The simplicity of GDAO ensures that you can master its usage within minutes.
+### [Usage Documentation](https://tlnet.top/gdaodoc)
 
+### [Example Program](https://github.com/donnie4w/gdaodemo)
 
-### [Official Website](https://tlnet.top/gdaoen)
-
-### [Documentation](https://tlnet.top/gdaoendoc)
-
-### [Demo](https://github.com/donnie4w/gdaodemo)
+---
 
 ### Key Features
+1. Full Table Object Mapping: Supports mapping table operations to standard struct object operations.
+2. Full SQL Object Mapping: Supports complete SQL operation mapping to object operations.
+3. Separation of SQL and Code: Supports the separation of SQL from the program, akin to [MyBatis](https://github.com/mybatis/mybatis-3).
 
-1. **Code Generation**: Use the Gdao code generation tool to create standardized entity classes for database tables, similar to Thrift/Protobuf.
-2. **Efficient Serialization**: The standardized entity classes for tables implement efficient serialization and deserialization, higher performance and smaller data volume.
-3. **Support for Data Read-Write Separation**: Gdao supports binding multiple data sources and data read-write separation, allowing data sources to be bound to tables, classes, mapping interfaces, and other properties.
-4. **Support for Data Caching**: Gdao supports data caching with detailed control over cache data lifecycle and recycling features.
-5. **Broad Compatibility**: Gdao theoretically supports all databases that implement the Go database driver interface.
-6. **Advanced Features**: Supports transactions, stored procedures, batch processing, and other database operations.
-7. **Support SQL and program separation**: Similar to mybatis, gdao supports xml file write sql mapping calls. This is one of the few orm features that supports the separation of SQL and programs, but it is very powerful.
+### Main Functionality
 
-#### GDAO's Innovative ORM Solution
+1. Code Generation: Run the GDAO code generation tool to create standardized entity classes for database tables. Similar to thrift/protobuf.
+2. Efficient Serialization: Standardized entity classes for tables implement efficient serialization and deserialization. Higher performance, smaller data size.
+3. Read-Write Splitting: GDAO supports binding multiple slave data source connections and implementing read-write separation for bound tables or SQL queries.
+4. Data Caching: GDAO supports data caching and provides detailed control over cache validity and data eviction characteristics.
+5. Broad Compatibility: GDAO theoretically supports all databases that implement the Go database driver interface.
+6. Advanced Features: Supports transactions, stored procedures, batch processing, and other database operations.
+7. Dynamic SQL: GDAO implements rich dynamic SQL construction features. Supports dynamic SQL tag mapping construction and native SQL dynamic construction.
+8. MyBatis Characteristics: GDAO's mapping module is the implementation of MyBatis in Go. It is also the only known ORM in Go that supports the separation of SQL from the application.
 
-Gdao is a sibling framework to [Jdao](https://github.com/donnie4w/jdao), sharing its design patterns.
+### GDAO Persistence Layer Solution
 
-1. **Standardized Mapped Entity Classes for Single Table CRUD Operations**: Over 90% of single-table operations can be performed through entity classes. These CRUD operations are generally not involved in complex SQL optimization and can be generated by entity classes to reduce error rates and simplify maintenance.
-   By utilizing mechanisms such as caching and read-write separation, the persistence layer becomes more efficient and convenient. The data operation format of standardized entity classes is not merely a concatenation of object functions but is more akin to SQL operations, making it easier to understand.
-2. **Execution of Complex SQL**: Complex SQL, especially multi-table joins, often require optimization based on the table structure and index properties. Using objects to concatenate complex SQL can increase the difficulty of understanding and may lead to developers being unaware of the final executed SQL, thereby increasing risk and maintenance difficulty.
-   Therefore, Gdao recommends using Gdao's CRUD interfaces for complex SQL problems. Gdao provides flexible data conversion and efficient object mapping implementations, avoiding excessive use of time-consuming operations such as reflection.
-3. **SQL Mapping Files**: For complex SQL operations, Gdao provides corresponding CRUD interfaces. It also supports mapping SQL through XML configuration for interface invocation, similar to the Java MyBatis ORM framework. However, unlike MyBatis which requires mapping all SQL operations, Gdao provides complete SQL mapping interfaces but recommends only mapping complex SQL or operations that standardized entity classes cannot complete.
-   Gdao's SQL configuration files reference the MyBatis configuration file format, implementing a new parser that allows for higher flexibility and tolerance of configuration parameter types (refer to the documentation).
+**Note:** Full table mapping and full SQL mapping can potentially lead to some issues such as over-encapsulation of objects and large numbers of repetitive, similar SQL statements. GDAO uses the abstraction of table mapping combined with the semi-automated management of SQL mapping to solve problems in the persistence layer.
 
-------
+1. **Full Table Object Mapping for CRUD Operations on Single Tables**: Mapping all operations to table object operations is a classic approach used by `Hibernate`, which can lead to over-encapsulation problems.
+   GDAO supports auto-generating mapping entity classes for tables specifically to handle CRUD operations on single tables. Its underlying dynamic SQL construction effectively addresses the issue of large numbers of similar SQL statements resulting from similar table operation behaviors.
+2. **Full SQL Object Mapping for Complex SQL Operations**: In practice, complex SQL, especially multi-table joins, often requires optimization, which requires understanding of the database schema, index properties, etc.
+   Concatenating complex SQL strings using Go objects can increase the difficulty of comprehension. Eventually, developers may not know what the final executed SQL statement looks like after object concatenation, which increases risk and maintenance difficulty.
+   GDAO implements the core feature of SQL mapping from `MyBatis`, allowing SQL to be configured in XML and mapped to Go objects.
+3. **`SqlBuilder` for Native SQL Dynamic Construction**: GDAO implements dynamic construction of native SQL. For extremely complex SQL, including functions or stored procedures, GDAO supports dynamic construction using `SqlBuilder`.
+   It is the procedural implementation of dynamic tags, based on Go programs to construct any form of SQL.
 
-![](https://tlnet.top/statics/tlnet/27567.jpg)
+---
 
-------
-
-### Core Components
-
-#### 1. gdao
-
-Main core entry point providing the following functionalities:
-- Setting data sources
-- SQL CRUD functions
-
-#### 2. gdaoCache
-
-Cache entry point supporting the following functionalities:
-- Binding or unbinding packages, classes, and other properties to enable or disable query caching
-
-#### 3. gdaoSlave
-
-Read-write separation operation entry point supporting the following functionalities:
-- Binding or unbinding packages, classes, and other properties to enable or disable read-write separation
-
-#### 4. gdaoMapper
-
-Execute SQL directly by calling Gdao's CRUD interfaces or use XML file mappings and call through gdaoMapper by Mapper Id
-
-------
-
-## Quick Start
+# Quick Start
 
 ### 1. Installation
 
 ```bash
-# import gdao
 go get github.com/donnie4w/gdao
 ```
 
-### 2. Configure Data Source
+### 2. Configuring Data Source
 
 ```go
-gdao.Init(mysqlDB, gdao.MYSQL)
-// dataSource is the data source
-// gdao.MYSQL is the database type
+gdao.Init(mysqldb, gdao.MYSQL) // Initialize gdao data source; mysqldb is an sql.DB object, gdao.MYSQL is the database type
 ```
 
-### 3. Generate Table Entity Classes
-
-Use the Gdao code generation tool to generate standardized entity classes for database tables.
-
-### 4. Entity Class Operations
+### 3. Standard Entity Class Operations
 
 ```go
-// Set data source
-gdao.Init(mysqlDB, gdao.MYSQL)
-
 // Read
 hs := dao.NewHstest()
 hs.Where(hs.Id.EQ(10))
-h, _ := hs.Select(hs.Id, hs.Value, hs.Rowname)
-logger.Debug(h)
-//[DEBUG][SELECT ONE][ select id, value, rowname from hstest where id=?][10]
+h, err := hs.Select(hs.Id, hs.Value, hs.Rowname)
+//[DEBUG][SELETE ONE][ select id,value,rowname from hstest where id=?][10] 
+```
 
+```go
 // Update
 hs := dao.NewHstest()
 hs.SetRowname("hello10")
 hs.Where(hs.Id.EQ(10))
 hs.Update()
 //[DEBUG][UPDATE][update hstest set rowname=? where id=?][hello10 10]
+```
 
+```go
 // Delete
 hs := dao.NewHstest()
 hs.Where(hs.Id.EQ(10))
 hs.Delete()
-//[DEBUG][DELETE][delete from hstest where id=?][10]
+//[DEBUG][UPDATE][delete from hstest where id=?][10]
+```
 
+```go
 // Insert
 hs := dao.NewHstest()
 hs.SetValue("hello123")
@@ -122,112 +92,68 @@ hs.SetLevel(12345)
 hs.SetBody([]byte("hello"))
 hs.SetRowname("hello1234")
 hs.SetUpdatetime(time.Now())
-hs.SetFloa(123456)
-hs.SetAge(123)
 hs.Insert()
-//[DEBUG][INSERT][insert into hstest(floa, age, value, level, body, rowname, updatetime) values(?,?,?,?,?,?,?)][123456 123 hello123 12345 [104 101 108 108 111] hello1234 2024-07-17 19:36:44]
+//[DEBUG][INSERT][insert  into hstest(floa,age,value,level,body,rowname,updatetime )values(?,?,?,?,?)][hello123 12345 hello hello1234 2024-07-17 19:36:44]
 ```
 
-### 5. gdao api
-
-###### CRUD Operations
+### 4. Native SQL Operations
 
 ```go
-// Query, return single record
-bean, _ := gdao.ExecuteQueryBean("select id, value, rowname from hstest where id=?", 10)
-logger.Debug(bean)
+// Query, return a single row; gdao is the entry point for native SQL operations
+gdao.ExecuteQueryBean("select id,value,rowname from hstest where id=?", 10)
 
 // Insert
-i := gdao.ExecuteUpdate("insert into hstest2(rowname, value) values(?,?)", "helloWorld", "123456789")
+gdao.ExecuteUpdate("insert into hstest2(rowname,value) values(?,?)", "helloWorld", "123456789");
 
 // Update
-i := gdao.ExecuteUpdate("update hstest set value=? where id=1", "hello")
+gdao.ExecuteUpdate("update hstest set value=? where id=1", "hello");
 
 // Delete
-i := gdao.ExecuteUpdate("delete from hstest where id = ?", 1)
+gdao.ExecuteUpdate("delete from hstest where id = ?", 1);
 ```
 
-### 6. gdaoCache
-
-###### Configure Caching
+### 5. Configuring Cache
 
 ```go
-// Bind Hstest to enable caching, cache expiration set to 300 seconds
+// Bind Hstest and enable caching; default cache expiration is 300 seconds; gdaoCache is the entry point for cache operations
 gdaoCache.BindClass[dao.Hstest]()
-
-// First query Hstest and set data cache based on conditions
-hs := dao.NewHstest()
-hs.Where((hs.Id.Between(0, 2)).Or(hs.Id.Between(10, 15)))
-hs.Limit(3)
-hs.Selects()
-
-// For the same conditions, data is directly retrieved from cache
-hs = dao.NewHstest()
-hs.Where((hs.Id.Between(0, 2)).Or(hs.Id.Between(10, 15)))
-hs.Limit(3)
-hs.Selects()
 ```
 
-##### Execution Result
-
-```text
-[DEBUG][SELECT LIST][ select id, age, rowname, value, updatetime, body, floa, level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
-[DEBUG][SET CACHE][ select id, age, rowname, value, updatetime, body, floa, level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
-[DEBUG][SELECT LIST][ select id, age, rowname, value, updatetime, body, floa, level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
-[DEBUG][GET CACHE][ select id, age, rowname, value, updatetime, body, floa, level from hstest where id between ? and ? or (id between ? and ?) LIMIT ? ][0 2 10 15 3]
-```
-
-### 7. gdaoSlave
-
-###### Read-Write Separation
+### 6. Read-Write Splitting
 
 ```go
-// Set slave data source: mysql
-mysqlDB, _ := getDataSource("mysql.json")
-gdaoSlave.BindClass[dao.Hstest](mysqlDB, gdao.MYSQL)
-// Here the main database is sqlite and the slave database is mysql. Hstest reads data from mysql
-hs := dao.NewHstest()
-hs.Where(hs.Id.Between(0, 5))
-hs.OrderBy(hs.Id.Desc())
-hs.Limit(3)
-hs.Selects()
+mysqldb := getDataSource("mysql.json") // Get slave data source: mysqldb
+gdaoSlave.BindClass[dao.Hstest](mysqldb, gdao.MYSQL) // Here the master database is sqlite, the slave database is mysql; Hstest reads from the mysql data source; gdaoSlave is the entry point for read-write splitting operations
 ```
 
-### 8. gdaoMapper
-
-###### Use XML to Map SQL
+### 7. SQL Mapping
 
 ```xml
 <!-- MyBatis style XML configuration file -->
 <mapper namespace="user">
    <select id="selectHstest1" parameterType="int64" resultType="hstest1">
-      SELECT * FROM hstest1 ORDER BY id DESC LIMIT #{limit}
+      SELECT * FROM hstest1  order by id desc limit #{limit}
    </select>
 </mapper>
 ```
 
 ```go
-// Set data source
-if db, err := getDataSource("sqlite.json"); err == nil {
-   gdao.Init(db, gdao.SQLITE)  
-   gdao.SetLogger(true)
-}
-
 // Read and parse XML configuration
 hs1, _ := gdaoMapper.Select[dao.Hstest1]("user.selectHstest1", 1)
 fmt.Println(hs1)
-
-id, _ := gdaoMapper.Select[int64]("user.selectHstest1", 1)
-fmt.Println(*id)
 ```
 
-##### Execution Result
+### 8. SqlBuilder
 
-```text
-[DEBUG][Mapper Id] user.selectHstest1 
-SELECTONE SQL[SELECT * FROM hstest1 ORDER BY id DESC LIMIT ?]ARGS[1]
-Id:52, Rowname:rowname>>>123456789, Value:[104 101 108 108 111 32 103 100 97 111], Goto:[49 50 51 52 53]
-[DEBUG][Mapper Id] user.selectHstest1 
-SELECTONE SQL[SELECT * FROM hstest1 ORDER BY id DESC LIMIT ?]ARGS[1]
-52
+```go
+func Test_sqlBuilder_if(t *testing.T) {
+   context := map[string]any{"id": 12}
+   
+   builder := &SqlBuilder{}
+   builder.Append("SELECT * FROM hstest where 1=1").
+           AppendIf("id>0", context, "and id=?", context["id"])  // Dynamic SQL, when id>0, dynamically add and id=?
+   
+   bean := builder.SelectOne()  // Query SQL: SELECT * FROM hstest where 1=1 and id=?  [ARGS][12]
+   logger.Debug(bean)
+}
 ```
