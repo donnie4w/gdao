@@ -10,6 +10,7 @@ package gdaoSlave
 import (
 	"database/sql"
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gdao/gdaoStruct"
 	"github.com/donnie4w/gdao/util"
 )
 
@@ -167,7 +168,7 @@ var (
 //	// And "db" is an instance of sql.DB configured for the database connection
 //	// And "gdao.MYSQL" represents the type of the database
 //	gdaoSlave.BindClass[User](db, gdao.MYSQL)
-func BindClass[T base.TableClass](db *sql.DB, dbtype base.DBType) {
+func BindClass[T gdaoStruct.TableClass](db *sql.DB, dbtype base.DBType) {
 	BindTable(db, dbtype, util.Classname[T]())
 }
 
@@ -187,10 +188,10 @@ func BindClass[T base.TableClass](db *sql.DB, dbtype base.DBType) {
 //	// Assuming User is the entity class
 //	// And "dbhandle" is an instance of DBhandle configured for the database connection and CRUD operations
 //	gdaoSlave.BindClassWithDBhandle[User](dbhandle)
-func BindClassWithDBhandle[T base.TableClass](dbhandle base.DBhandle) {
+func BindClassWithDBhandle[T gdaoStruct.TableClass](dbhandle base.DBhandle) {
 	BindTableWithDBhandle(dbhandle, util.Classname[T]())
 }
 
-func UnbindClass[T base.TableClass]() {
+func UnbindClass[T gdaoStruct.TableClass]() {
 	UnbindTable(util.Classname[T]())
 }
