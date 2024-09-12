@@ -38,14 +38,13 @@ func ToMap(arg any) map[string]any {
 	case map[string]any:
 		return v
 	}
-
 	result := make(map[string]any)
 	val := reflect.ValueOf(arg)
+	valStruct := val
 	typ := reflect.TypeOf(arg)
-
 	if typ.Kind() == reflect.Ptr {
 		typ = typ.Elem()
-		val = val.Elem()
+		valStruct = val.Elem()
 	}
 	if typ.Kind() != reflect.Struct {
 		panic(fmt.Sprintf("argument must be a struct or a pointer to struct: %s", typ))
@@ -53,7 +52,7 @@ func ToMap(arg any) map[string]any {
 	if _, ok := arg.(TableClass); !ok {
 		for i := 0; i < typ.NumField(); i++ {
 			field := typ.Field(i)
-			fieldValue := val.Field(i)
+			fieldValue := valStruct.Field(i)
 			if field.PkgPath != "" {
 				continue
 			}
