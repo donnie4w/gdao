@@ -14,21 +14,30 @@ import (
 	"strings"
 )
 
-type SqlBuilder struct {
+type sqlBuilder struct {
 	sql        strings.Builder
 	parameters []any
 	dbhandle   base.DBhandle
+	tx         base.Transaction
 }
 
-func NewSqlBuilder() *SqlBuilder {
-	return &SqlBuilder{}
+func NewSqlBuilder() SqlBuilder {
+	return &sqlBuilder{}
 }
 
-func (b *SqlBuilder) UseDBhandle(dbhandle base.DBhandle) {
+func (b *sqlBuilder) UseDBhandle(dbhandle base.DBhandle) {
 	b.dbhandle = dbhandle
 }
 
-func (b *SqlBuilder) Append(text string, params ...any) *SqlBuilder {
+func (b *sqlBuilder) UseTransaction(transaction base.Transaction) {
+	b.tx = transaction
+}
+
+func (b *sqlBuilder) Append(text string, params ...any) SqlBuilder {
+	return b.append(text, params...)
+}
+
+func (b *sqlBuilder) append(text string, params ...any) *sqlBuilder {
 	b.sql.WriteString(" ")
 	b.sql.WriteString(text)
 	b.sql.WriteString(" ")
@@ -36,7 +45,7 @@ func (b *SqlBuilder) Append(text string, params ...any) *SqlBuilder {
 	return b
 }
 
-func (b *SqlBuilder) AppendIf(expression string, context any, text string, params ...any) *SqlBuilder {
+func (b *sqlBuilder) AppendIf(expression string, context any, text string, params ...any) SqlBuilder {
 	if evaluate(expression, context) {
 		b.sql.WriteString(" ")
 		b.sql.WriteString(text)
@@ -45,13 +54,13 @@ func (b *SqlBuilder) AppendIf(expression string, context any, text string, param
 	return b
 }
 
-func (b *SqlBuilder) AppendChoose(context any, chooseBuilderConsumer func(*ChooseBuilder)) *SqlBuilder {
-	chooseBuilder := NewChooseBuilder(b, context)
+func (b *sqlBuilder) AppendChoose(context any, chooseBuilderConsumer func(ChooseBuilder)) SqlBuilder {
+	chooseBuilder := newChooseBuilder(b, context)
 	chooseBuilderConsumer(chooseBuilder)
 	return b
 }
 
-func (b *SqlBuilder) AppendForeach(collectionName string, context any, item, separator, open, close string, foreachConsumer func(*ForeachBuilder)) *SqlBuilder {
+func (b *sqlBuilder) AppendForeach(collectionName string, context any, item, separator, open, close string, foreachConsumer func(ForeachBuilder)) SqlBuilder {
 	var collectionObj any
 	if collectionName != "" && collectionName != "list" && collectionName != "array" {
 		switch m := context.(type) {
@@ -76,7 +85,7 @@ func (b *SqlBuilder) AppendForeach(collectionName string, context any, item, sep
 			b.sql.WriteString(open)
 		}
 
-		foreachBuilder := NewForeachBuilder(b, separator)
+		foreachBuilder := newForeachBuilder(b, separator)
 		foreachConsumer(foreachBuilder)
 
 		for i, currentItem := range collection {
@@ -96,8 +105,8 @@ func (b *SqlBuilder) AppendForeach(collectionName string, context any, item, sep
 	return b
 }
 
-func (b *SqlBuilder) AppendTrim(prefix, suffix, prefixOverrides, suffixOverrides string, contentBuilder func(*SqlBuilder)) *SqlBuilder {
-	tempBuilder := NewSqlBuilder()
+func (b *sqlBuilder) AppendTrim(prefix, suffix, prefixOverrides, suffixOverrides string, contentBuilder func(SqlBuilder)) SqlBuilder {
+	tempBuilder := &sqlBuilder{}
 	contentBuilder(tempBuilder)
 	tempSql := strings.TrimSpace(tempBuilder.sql.String())
 
@@ -133,8 +142,8 @@ func (b *SqlBuilder) AppendTrim(prefix, suffix, prefixOverrides, suffixOverrides
 	return b
 }
 
-func (b *SqlBuilder) AppendSet(contentBuilder func(*SqlBuilder)) *SqlBuilder {
-	tempBuilder := NewSqlBuilder()
+func (b *sqlBuilder) AppendSet(contentBuilder func(SqlBuilder)) SqlBuilder {
+	tempBuilder := &sqlBuilder{}
 	contentBuilder(tempBuilder)
 	tempSql := strings.TrimRight(tempBuilder.sql.String(), ", ")
 	if len(tempSql) > 0 {
@@ -146,25 +155,25 @@ func (b *SqlBuilder) AppendSet(contentBuilder func(*SqlBuilder)) *SqlBuilder {
 	return b
 }
 
-func (b *SqlBuilder) GetSql() string {
+func (b *sqlBuilder) GetSql() string {
 	return b.sql.String()
 }
 
-func (b *SqlBuilder) GetParameters() []any {
+func (b *sqlBuilder) GetParameters() []any {
 	return b.parameters
 }
 
-func (b *SqlBuilder) addParameter(param any) {
+func (b *sqlBuilder) addParameter(param any) {
 	b.parameters = append(b.parameters, param)
 }
 
-func (b *SqlBuilder) addParameters(params ...any) {
+func (b *sqlBuilder) addParameters(params ...any) {
 	if len(params) > 0 {
 		b.parameters = append(b.parameters, params...)
 	}
 }
 
-func (b *SqlBuilder) SelectOne() *base.DataBean {
+func (b *sqlBuilder) SelectOne() *base.DataBean {
 	if base.Logger.IsVaild {
 		base.Logger.Debug("[SqlBuilder SQL]", b.GetSql(), "[ARGS]", b.GetParameters())
 	}
@@ -174,21 +183,24 @@ func (b *SqlBuilder) SelectOne() *base.DataBean {
 	return gdao.ExecuteQueryBean(b.GetSql(), b.GetParameters()...)
 }
 
-func (b *SqlBuilder) SelectList() *base.DataBeans {
+func (b *sqlBuilder) SelectList() *base.DataBeans {
 	if base.Logger.IsVaild {
 		base.Logger.Debug("[SqlBuilder SQL]", b.GetSql(), "[ARGS]", b.GetParameters())
 	}
 	return b.getDBHandle().ExecuteQueryBeans(b.GetSql(), b.GetParameters()...)
 }
 
-func (b *SqlBuilder) Exec() (int64, error) {
+func (b *sqlBuilder) Exec() (int64, error) {
 	if base.Logger.IsVaild {
 		base.Logger.Debug("[SqlBuilder SQL]", b.GetSql(), "[ARGS]", b.GetParameters())
 	}
 	return b.getDBHandle().ExecuteUpdate(b.GetSql(), b.GetParameters()...)
 }
 
-func (b *SqlBuilder) getDBHandle() (r base.DBhandle) {
+func (b *sqlBuilder) getDBHandle() (r base.DBhandle) {
+	if r = b.tx; r != nil {
+		return
+	}
 	if r = b.dbhandle; r != nil {
 		return
 	}
@@ -198,42 +210,42 @@ func (b *SqlBuilder) getDBHandle() (r base.DBhandle) {
 	panic("no datasource handle found")
 }
 
-type ChooseBuilder struct {
-	parentBuilder *SqlBuilder
+type chooseBuilder struct {
+	parentBuilder *sqlBuilder
 	context       any
 	conditionMet  bool
 }
 
-func NewChooseBuilder(parentBuilder *SqlBuilder, context any) *ChooseBuilder {
-	return &ChooseBuilder{parentBuilder: parentBuilder, context: context}
+func newChooseBuilder(parentBuilder *sqlBuilder, context any) *chooseBuilder {
+	return &chooseBuilder{parentBuilder: parentBuilder, context: context}
 }
 
-func (cb *ChooseBuilder) When(expression, sql string, params ...any) *ChooseBuilder {
+func (cb *chooseBuilder) When(expression, sql string, params ...any) ChooseBuilder {
 	if !cb.conditionMet && evaluate(expression, cb.context) {
-		cb.parentBuilder.Append(sql).addParameters(params...)
+		cb.parentBuilder.append(sql).addParameters(params...)
 		cb.conditionMet = true
 	}
 	return cb
 }
 
-func (cb *ChooseBuilder) Otherwise(sql string, params ...any) *ChooseBuilder {
+func (cb *chooseBuilder) Otherwise(sql string, params ...any) ChooseBuilder {
 	if !cb.conditionMet {
-		cb.parentBuilder.Append(sql).addParameters(params...)
+		cb.parentBuilder.append(sql).addParameters(params...)
 	}
 	return cb
 }
 
-type ForeachBuilder struct {
-	parentBuilder *SqlBuilder
+type foreachBuilder struct {
+	parentBuilder *sqlBuilder
 	separator     string
 	body          string
 }
 
-func NewForeachBuilder(parentBuilder *SqlBuilder, separator string) *ForeachBuilder {
-	return &ForeachBuilder{parentBuilder: parentBuilder, separator: separator}
+func newForeachBuilder(parentBuilder *sqlBuilder, separator string) *foreachBuilder {
+	return &foreachBuilder{parentBuilder: parentBuilder, separator: separator}
 }
 
-func (fb *ForeachBuilder) Body(body string) *ForeachBuilder {
+func (fb *foreachBuilder) Body(body string) ForeachBuilder {
 	fb.body = body
 	return fb
 }
