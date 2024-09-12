@@ -42,7 +42,7 @@ func (g *gdbcHandler) GetDB() *sql.DB {
 func (g *gdbcHandler) ExecuteQueryBeans(sqlstr string, args ...any) (r *base.DataBeans) {
 	r = &base.DataBeans{}
 	sqlstr = parseSql(g.DBType, sqlstr, args)
-	if dbs, err := executeQueryBeans(g.TX, g.DB, sqlstr, args...); err == nil {
+	if dbs, err := stmtExec.executeQueryBeans(g.TX, g.DB, sqlstr, args...); err == nil {
 		r.Beans = dbs
 	} else {
 		r.SetError(err)
@@ -52,7 +52,7 @@ func (g *gdbcHandler) ExecuteQueryBeans(sqlstr string, args ...any) (r *base.Dat
 
 func (g *gdbcHandler) ExecuteQueryBean(sqlstr string, args ...any) (r *base.DataBean) {
 	sqlstr = parseSql(g.DBType, sqlstr, args)
-	if db, err := executeQueryBean(g.TX, g.DB, sqlstr, args...); err == nil {
+	if db, err := stmtExec.executeQueryBean(g.TX, g.DB, sqlstr, args...); err == nil {
 		return db
 	} else {
 		r = &base.DataBean{}
@@ -63,7 +63,7 @@ func (g *gdbcHandler) ExecuteQueryBean(sqlstr string, args ...any) (r *base.Data
 
 func (g *gdbcHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
 	sqlstr = parseSql(g.DBType, sqlstr, args)
-	return executeUpdate(g.TX, g.DB, sqlstr, args...)
+	return stmtExec.executeUpdate(g.TX, g.DB, sqlstr, args...)
 }
 
 func (g *gdbcHandler) ExecuteBatch(sqlstr string, args [][]any) ([]int64, error) {
