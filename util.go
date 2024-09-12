@@ -43,8 +43,16 @@ const (
 	INFORMIX
 )
 
+var (
+	stmtLimit int64 = 10000
+)
+
 func SetLogger(on bool) {
 	base.Logger.SetLogger(on)
+}
+
+func PreCompile(limit uint32) {
+	stmtLimit = int64(limit)
 }
 
 func parseSql(dbtype base.DBType, sqlstr string, args ...any) string {
