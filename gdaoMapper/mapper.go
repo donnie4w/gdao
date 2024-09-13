@@ -87,7 +87,7 @@ type GdaoMapper interface {
 	//   if err != nil {
 	//       log.Fatalf("Failed to insertXml user: %v", err)
 	//   }
-	Insert(mapperId string, args ...any) (int64, error)
+	Insert(mapperId string, args ...any) (sql.Result, error)
 
 	// Update executes an updateXml operation based on the specified XML mapping mapper ID.
 	//
@@ -108,7 +108,7 @@ type GdaoMapper interface {
 	//   if err != nil {
 	//       log.Fatalf("Failed to updateXml user: %v", err)
 	//   }
-	Update(mapperId string, args ...any) (int64, error)
+	Update(mapperId string, args ...any) (sql.Result, error)
 
 	// Delete executes a deleteXml operation based on the specified XML mapping mapper ID.
 	//
@@ -129,7 +129,7 @@ type GdaoMapper interface {
 	//   if err != nil {
 	//       log.Fatalf("Failed to deleteXml user: %v", err)
 	//   }
-	Delete(mapperId string, args ...any) (int64, error)
+	Delete(mapperId string, args ...any) (sql.Result, error)
 }
 
 var (
@@ -206,7 +206,7 @@ var (
 	//   if err != nil {
 	//       log.Fatalf("Failed to insertXml user: %v", err)
 	//   }
-	Insert func(mapperId string, args ...any) (r int64, err error)
+	Insert func(mapperId string, args ...any) (r sql.Result, err error)
 
 	// Update executes an updateXml operation based on the specified XML mapping mapper ID.
 	//
@@ -227,7 +227,7 @@ var (
 	//   if err != nil {
 	//       log.Fatalf("Failed to insertXml user: %v", err)
 	//   }
-	Update func(mapperId string, args ...any) (r int64, err error)
+	Update func(mapperId string, args ...any) (r sql.Result, err error)
 
 	// Delete executes an deleteXml operation based on the specified XML mapping mapper ID.
 	//
@@ -248,7 +248,7 @@ var (
 	//   if err != nil {
 	//       log.Fatalf("Failed to insertXml user: %v", err)
 	//   }
-	Delete func(mapperId string, args ...any) (r int64, err error)
+	Delete func(mapperId string, args ...any) (r sql.Result, err error)
 )
 
 // Select executes a query based on the specified XML mapping mapper ID and returns a single row of data as an instance of the generic type T.
