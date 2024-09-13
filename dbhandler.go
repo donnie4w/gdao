@@ -49,10 +49,10 @@ func (h *dbHandler) ExecuteQueryBeans(sqlstr string, args ...any) (r *DataBeans)
 	return h.gdbc.ExecuteQueryBeans(sqlstr, args...)
 }
 
-func (h *dbHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
+func (h *dbHandler) ExecuteUpdate(sqlstr string, args ...any) (sql.Result, error) {
 	return h.gdbc.ExecuteUpdate(sqlstr, args...)
 }
 
-func (h *dbHandler) ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error) {
+func (h *dbHandler) ExecuteBatch(sqlstr string, args [][]any) (r []sql.Result, err error) {
 	return h.gdbc.ExecuteBatch(sqlstr, args)
 }
