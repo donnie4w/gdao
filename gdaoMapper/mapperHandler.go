@@ -201,7 +201,7 @@ func (t *mapperHandler) _selectBeans(mapperId string, pb *paramBean, args ...any
 	return
 }
 
-func (t *mapperHandler) Insert(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Insert(mapperId string, args ...any) (r sql.Result, err error) {
 	if len(args) == 1 {
 		return t.insert(mapperId, args[0])
 	}
@@ -215,7 +215,7 @@ func (t *mapperHandler) Insert(mapperId string, args ...any) (r int64, err error
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) insert(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) insert(mapperId string, parameter any) (r sql.Result, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
@@ -227,7 +227,7 @@ func (t *mapperHandler) insert(mapperId string, parameter any) (r int64, err err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Update(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Update(mapperId string, args ...any) (r sql.Result, err error) {
 	if len(args) == 1 {
 		return t.update(mapperId, args[0])
 	}
@@ -241,7 +241,7 @@ func (t *mapperHandler) Update(mapperId string, args ...any) (r int64, err error
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) update(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) update(mapperId string, parameter any) (r sql.Result, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
@@ -253,7 +253,7 @@ func (t *mapperHandler) update(mapperId string, parameter any) (r int64, err err
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) Delete(mapperId string, args ...any) (r int64, err error) {
+func (t *mapperHandler) Delete(mapperId string, args ...any) (r sql.Result, err error) {
 	if len(args) == 1 {
 		return t.delete(mapperId, args[0])
 	}
@@ -267,7 +267,7 @@ func (t *mapperHandler) Delete(mapperId string, args ...any) (r int64, err error
 	return t.getDBhandle(pb.namespace, pb.id, false).ExecuteUpdate(pb.sql, args...)
 }
 
-func (t *mapperHandler) delete(mapperId string, parameter any) (r int64, err error) {
+func (t *mapperHandler) delete(mapperId string, parameter any) (r sql.Result, err error) {
 	var pb *paramBean
 	var args []any
 	if pb, args, err = t.parseParameter(mapperId, parameter); err != nil {
