@@ -8,6 +8,7 @@
 package gdao
 
 import (
+	"database/sql"
 	. "github.com/donnie4w/gdao/base"
 )
 
@@ -64,15 +65,15 @@ type GStruct[P any, T any] interface {
 	// Select sql:select from table and Return first data
 	Select(columns ...Column[T]) (_r P, err error)
 	// Update sql: update
-	Update() (int64, error)
+	Update() (sql.Result, error)
 	// Insert sql: insert
-	Insert() (int64, error)
+	Insert() (sql.Result, error)
 	// Delete sql: delete
-	Delete() (int64, error)
+	Delete() (sql.Result, error)
 	// AddBatch sql: add data to batch sql
 	AddBatch()
 	// ExecBatch sql:database batch operation
-	ExecBatch() ([]int64, error)
+	ExecBatch() ([]sql.Result, error)
 	//Copy object data
 	Copy(h P) P
 	// Encode Serialized object
