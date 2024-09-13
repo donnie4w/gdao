@@ -103,9 +103,9 @@ func executeQueryBean(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (dataB
 	return
 }
 
-func executeUpdate(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (r int64, err error) {
+func executeUpdate(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (rs sql.Result, err error) {
 	if tx == nil && db == nil {
-		return 0, errInit
+		return nil, errInit
 	}
 	defer util.Recover(&err)
 	var stmtIns *sql.Stmt
@@ -118,14 +118,10 @@ func executeUpdate(tx *sql.Tx, db *sql.DB, sqlstr string, args ...any) (r int64,
 		return
 	}
 	defer stmtIns.Close()
-	var rs sql.Result
-	if rs, err = stmtIns.Exec(args...); err == nil {
-		return rs.RowsAffected()
-	}
-	return
+	return stmtIns.Exec(args...)
 }
 
-func executeBatch(tx *sql.Tx, db *sql.DB, sqlstr string, args [][]any) (r []int64, err error) {
+func executeBatch(tx *sql.Tx, db *sql.DB, sqlstr string, args [][]any) (r []sql.Result, err error) {
 	if tx == nil && db == nil {
 		return nil, errInit
 	}
@@ -140,11 +136,10 @@ func executeBatch(tx *sql.Tx, db *sql.DB, sqlstr string, args [][]any) (r []int6
 		return nil, err
 	}
 	defer stmtIns.Close()
-	r = make([]int64, 0)
+	r = make([]sql.Result, 0)
 	for _, record := range args {
 		if rs, er := stmtIns.Exec(record...); er == nil {
-			i, _ := rs.RowsAffected()
-			r = append(r, i)
+			r = append(r, rs)
 		} else {
 			err = er
 			break
