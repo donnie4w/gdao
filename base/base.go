@@ -23,9 +23,9 @@ type DBhandle interface {
 
 	ExecuteQueryBeans(sql string, args ...any) *DataBeans
 
-	ExecuteUpdate(sql string, args ...any) (int64, error)
+	ExecuteUpdate(sql string, args ...any) (sql.Result, error)
 
-	ExecuteBatch(sql string, args [][]any) (r []int64, err error)
+	ExecuteBatch(sql string, args [][]any) (r []sql.Result, err error)
 
 	GetDBType() DBType
 
