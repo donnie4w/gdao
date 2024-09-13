@@ -15,8 +15,8 @@ import (
 type gdbcHandle interface {
 	ExecuteQueryBeans(sqlstr string, args ...any) *base.DataBeans
 	ExecuteQueryBean(sqlstr string, args ...any) *base.DataBean
-	ExecuteUpdate(sqlstr string, args ...any) (int64, error)
-	ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error)
+	ExecuteUpdate(sqlstr string, args ...any) (sql.Result, error)
+	ExecuteBatch(sqlstr string, args [][]any) (r []sql.Result, err error)
 	GetDBType() base.DBType
 	GetDB() *sql.DB
 	Close() error
@@ -61,12 +61,12 @@ func (g *gdbcHandler) ExecuteQueryBean(sqlstr string, args ...any) (r *base.Data
 	return
 }
 
-func (g *gdbcHandler) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
+func (g *gdbcHandler) ExecuteUpdate(sqlstr string, args ...any) (sql.Result, error) {
 	sqlstr = parseSql(g.DBType, sqlstr, args)
 	return stmtExec.executeUpdate(g.TX, g.DB, sqlstr, args...)
 }
 
-func (g *gdbcHandler) ExecuteBatch(sqlstr string, args [][]any) ([]int64, error) {
+func (g *gdbcHandler) ExecuteBatch(sqlstr string, args [][]any) ([]sql.Result, error) {
 	sqlstr = parseSql(g.DBType, sqlstr, args)
 	return executeBatch(g.TX, g.DB, sqlstr, args)
 }
