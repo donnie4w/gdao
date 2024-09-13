@@ -8,6 +8,7 @@
 package gdao
 
 import (
+	"database/sql"
 	"github.com/donnie4w/gdao/base"
 )
 
@@ -83,9 +84,9 @@ func ExecuteQueryBeans(sql string, args ...any) *base.DataBeans {
 // args is an optional list of parameters to substitute placeholders in the SQL statement.
 // The function returns the number of rows affected by the SQL statement and any error encountered.
 // If there's an error, it returns -1 and the specific error information; otherwise, it returns the number of affected rows and nil.
-func ExecuteUpdate(sql string, args ...any) (int64, error) {
+func ExecuteUpdate(sql string, args ...any) (sql.Result, error) {
 	if defaultDBhandle == nil {
-		return 0, errInit
+		return nil, errInit
 	}
 	return defaultDBhandle.ExecuteUpdate(sql, args...)
 }
@@ -95,7 +96,7 @@ func ExecuteUpdate(sql string, args ...any) (int64, error) {
 // args is a slice of slices, where each inner slice contains the arguments for a single SQL statement.
 // The function returns a slice of int64 values representing the number of rows affected by each SQL statement and any error encountered.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns the slice of affected rows and nil.
-func ExecuteBatch(sql string, args [][]any) ([]int64, error) {
+func ExecuteBatch(sql string, args [][]any) ([]sql.Result, error) {
 	if defaultDBhandle == nil {
 		return nil, errInit
 	}
