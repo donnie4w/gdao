@@ -60,14 +60,14 @@ func _select[T any](mh *mapperHandler, pb *paramBean, args ...any) (r *T, err er
 		}
 	}
 	var databean *base.DataBean
-	if databean = mh.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBean(pb.sql, args...); databean.GetError() == nil {
+	if databean = mh.getDBhandle(pb.namespace, pb.id, true).ExecuteQueryBean(pb.sql, args...); databean.GetError() == nil && databean.Len() > 0 {
 		if isDBType(pb.outputType) {
 			r, err = toT[T](databean)
 		}
 		if r == nil {
 			if err = databean.GetError(); err == nil {
 				r = new(T)
-				if err = databean.Scan(r); err != nil {
+				if err = databean.ScanAndFree(r); err != nil {
 					r, err = toT[T](databean)
 				}
 			}
@@ -138,7 +138,7 @@ func selects[T any](mh *mapperHandler, pb *paramBean, args ...any) (r []*T, err 
 			ok := true
 			for _, databean := range databeans.Beans {
 				v := new(T)
-				if err := databean.Scan(v); err == nil {
+				if err := databean.ScanAndFree(v); err == nil {
 					r = append(r, v)
 				} else {
 					ok = false
