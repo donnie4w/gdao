@@ -19,9 +19,9 @@ import (
 // The function returns a pointer to a value of type *T, which is typically a pointer to a struct that holds the query results.
 // If there's an error, it returns nil and the specific error information; otherwise, it returns a filled result object and nil.
 func ExecuteQuery[T any](sql string, args ...any) (r *T, err error) {
-	if databean := defaultDBhandle.ExecuteQueryBean(sql, args...); databean.GetError() == nil {
+	if databean := defaultDBhandle.ExecuteQueryBean(sql, args...); databean.GetError() == nil && databean.Len() > 0 {
 		r = new(T)
-		err = databean.Scan(r)
+		err = databean.ScanAndFree(r)
 	} else {
 		err = databean.GetError()
 	}
@@ -39,7 +39,7 @@ func ExecuteQueryList[T any](sql string, args ...any) (r []*T, err error) {
 		r = make([]*T, 0)
 		for _, databean := range databeans.Beans {
 			t := new(T)
-			if err = databean.Scan(t); err == nil {
+			if err = databean.ScanAndFree(t); err == nil {
 				r = append(r, t)
 			} else {
 				break
