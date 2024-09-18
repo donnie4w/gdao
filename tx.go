@@ -56,11 +56,11 @@ func (x *tx) GetDB() *sql.DB {
 	return x.gdbc.GetDB()
 }
 
-func (x *tx) ExecuteUpdate(sqlstr string, args ...any) (int64, error) {
+func (x *tx) ExecuteUpdate(sqlstr string, args ...any) (sql.Result, error) {
 	return x.gdbc.ExecuteUpdate(sqlstr, args...)
 }
 
-func (x *tx) ExecuteBatch(sqlstr string, args [][]any) (r []int64, err error) {
+func (x *tx) ExecuteBatch(sqlstr string, args [][]any) (r []sql.Result, err error) {
 	return x.gdbc.ExecuteBatch(sqlstr, args)
 }
 
