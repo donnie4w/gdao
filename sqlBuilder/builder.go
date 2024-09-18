@@ -8,6 +8,7 @@
 package sqlBuilder
 
 import (
+	"database/sql"
 	"github.com/donnie4w/gdao/base"
 )
 
@@ -92,7 +93,7 @@ type SqlBuilder interface {
 	// Exec executes a SQL statement and returns the number of affected rows.
 	// Returns an int64 value representing the number of affected rows.
 	// If there is an error during execution, it also returns the corresponding error information.
-	Exec() (int64, error)
+	Exec() (sql.Result, error)
 }
 
 type ForeachBuilder interface {
