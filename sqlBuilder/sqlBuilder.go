@@ -8,6 +8,7 @@
 package sqlBuilder
 
 import (
+	"database/sql"
 	"github.com/donnie4w/gdao"
 	"github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/util"
@@ -190,7 +191,7 @@ func (b *sqlBuilder) SelectList() *base.DataBeans {
 	return b.getDBHandle().ExecuteQueryBeans(b.GetSql(), b.GetParameters()...)
 }
 
-func (b *sqlBuilder) Exec() (int64, error) {
+func (b *sqlBuilder) Exec() (sql.Result, error) {
 	if base.Logger.IsVaild {
 		base.Logger.Debug("[SqlBuilder SQL]", b.GetSql(), "[ARGS]", b.GetParameters())
 	}
