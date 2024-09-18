@@ -8,6 +8,7 @@
 package gdao
 
 import (
+	"database/sql"
 	. "github.com/donnie4w/gdao/base"
 	"github.com/donnie4w/gdao/gdaoCache"
 	"github.com/donnie4w/gdao/gdaoStruct"
@@ -145,7 +146,7 @@ func (t *Table[T]) executeQueryList(columns ...Column[T]) (_r []*T, err error) {
 			_r = make([]*T, 0)
 			for _, bean := range databeans.Beans {
 				t := new(T)
-				if err = bean.Scan(t); err == nil {
+				if err = bean.ScanAndFree(t); err == nil {
 					_r = append(_r, t)
 				} else {
 					break
@@ -190,9 +191,9 @@ func (t *Table[T]) executeQuery(columns ...Column[T]) (_r *T, err error) {
 	}
 
 	if g := t.getDB(true); g != nil {
-		if bean := g.ExecuteQueryBean(t.sql, t.args...); bean.GetError() == nil {
+		if bean := g.ExecuteQueryBean(t.sql, t.args...); bean.GetError() == nil && bean.Len() > 0 {
 			_r = new(T)
-			if err = bean.Scan(_r); err == nil {
+			if err = bean.ScanAndFree(_r); err == nil {
 				if iscache {
 					gdaoCache.SetCache(domain, t.classname, condition, _r)
 					if Logger.IsVaild {
@@ -373,7 +374,7 @@ func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
 	return t.executeQuery(columns...)
 }
 
-func (t *Table[T]) Update() (int64, error) {
+func (t *Table[T]) Update() (sql.Result, error) {
 	modifystr := make([]string, 0)
 	args := make([]any, 0)
 	for k, v := range t.modifymap {
@@ -394,11 +395,11 @@ func (t *Table[T]) Update() (int64, error) {
 	if g := t.getDB(false); g != nil {
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
-		return 0, errInit
+		return nil, errInit
 	}
 }
 
-func (t *Table[T]) Insert() (int64, error) {
+func (t *Table[T]) Insert() (sql.Result, error) {
 	insertField := make([]string, 0)
 	insert_ := make([]string, 0)
 	args := make([]any, 0)
@@ -420,7 +421,7 @@ func (t *Table[T]) Insert() (int64, error) {
 	if g := t.getDB(false); g != nil {
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
-		return 0, errInit
+		return nil, errInit
 	}
 }
 
@@ -437,9 +438,9 @@ func (t *Table[T]) AddBatch() {
 	}
 }
 
-func (t *Table[T]) ExecBatch() ([]int64, error) {
+func (t *Table[T]) ExecBatch() ([]sql.Result, error) {
 	if len(t.batchmap) == 0 {
-		return []int64{0}, nil
+		return nil, nil
 	}
 	insertField := make([]string, len(t.batchmap))
 	insert_ := make([]string, len(t.batchmap))
@@ -466,7 +467,7 @@ func (t *Table[T]) ExecBatch() ([]int64, error) {
 	}
 }
 
-func (t *Table[T]) Delete() (int64, error) {
+func (t *Table[T]) Delete() (sql.Result, error) {
 	t.modifySql = " delete from " + t.tableName
 	t.completeSql4Update()
 
@@ -477,7 +478,7 @@ func (t *Table[T]) Delete() (int64, error) {
 	if g := t.getDB(false); g != nil {
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
-		return 0, errInit
+		return nil, errInit
 	}
 }
 
