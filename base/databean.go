@@ -33,7 +33,7 @@ func (d *DataBeans) GetError() error {
 	return d.err
 }
 
-// Scan copies the data from the DataBeans into the provided variable 'v'.
+// ScanAndFree copies the data from the DataBeans into the provided variable 'v'.
 // This method is typically used to transfer data out of the DataBean and into
 // another data structure or variable.
 //
@@ -41,7 +41,18 @@ func (d *DataBeans) GetError() error {
 // should not be used anymore. It is the caller's responsibility to ensure that
 // the DataBeans is not accessed after calling Scan, as the internal data may
 // have been cleared or reused for subsequent operations.
+func (d *DataBeans) ScanAndFree(v any) error {
+	return d.scan(v, true)
+}
+
+// Scan copies the data from the DataBeans into the provided variable 'v'.
+// This method is typically used to transfer data out of the DataBean and into
+// another data structure or variable.
 func (d *DataBeans) Scan(v any) error {
+	return d.scan(v, false)
+}
+
+func (d *DataBeans) scan(v any, free bool) error {
 	if d == nil {
 		return nil
 	}
@@ -63,13 +74,13 @@ func (d *DataBeans) Scan(v any) error {
 	for _, bean := range d.Beans {
 		if elemType.Kind() == reflect.Ptr {
 			elem := reflect.New(elemType.Elem())
-			if err := bean.Scan(elem.Interface()); err != nil {
+			if err := bean.scan(elem.Interface(), free); err != nil {
 				return err
 			}
 			sliceValue.Set(reflect.Append(sliceValue, elem))
 		} else {
 			elem := reflect.New(elemType).Elem()
-			if err := bean.Scan(elem.Addr().Interface()); err != nil {
+			if err := bean.scan(elem.Addr().Interface(), free); err != nil {
 				return err
 			}
 			sliceValue.Set(reflect.Append(sliceValue, elem))
@@ -181,7 +192,7 @@ func (g *DataBean) String() (r string) {
 	return strings.Join(sb, ",")
 }
 
-// Scan copies the data from the DataBean into the provided variable 'v'.
+// ScanAndFree copies the data from the DataBean into the provided variable 'v'.
 // This method is typically used to transfer data out of the DataBean and into
 // another data structure or variable.
 //
@@ -189,7 +200,18 @@ func (g *DataBean) String() (r string) {
 // should not be used anymore. It is the caller's responsibility to ensure that
 // the DataBean is not accessed after calling Scan, as the internal data may
 // have been cleared or reused for subsequent operations.
+func (g *DataBean) ScanAndFree(v any) (err error) {
+	return g.scan(v, true)
+}
+
+// Scan copies the data from the DataBean into the provided variable 'v'.
+// This method is typically used to transfer data out of the DataBean and into
+// another data structure or variable.
 func (g *DataBean) Scan(v any) (err error) {
+	return g.scan(v, false)
+}
+
+func (g *DataBean) scan(v any, free bool) (err error) {
 	//defer util.Recover(&err)
 	if g != nil {
 		if g.err != nil {
@@ -206,7 +228,9 @@ func (g *DataBean) Scan(v any) (err error) {
 			for name, fieldBean := range g.fieldMapName {
 				scanner.Scan(name, fieldBean.Value())
 			}
-			g.free()
+			if free {
+				g.free()
+			}
 			return nil
 			//val := reflect.ValueOf(scanner).Elem()
 			//return val.Addr().Interface().(*T), nil
@@ -273,7 +297,9 @@ func (g *DataBean) Scan(v any) (err error) {
 				}
 			}
 		}
-		g.free()
+		if free {
+			g.free()
+		}
 		return
 	}
 	return fmt.Errorf("DataBean is nil")
