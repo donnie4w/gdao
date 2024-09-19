@@ -149,3 +149,17 @@ func trimNonLetterPrefix(s string) string {
 		return !unicode.IsLetter(r)
 	})
 }
+
+func tag(dbtype, fieldname string, useTag bool) string {
+	if !useTag {
+		return fieldname
+	}
+	switch strings.ToLower(dbtype) {
+	case "mysql", "mariadb", "sqlite", "tidb", "oceanbase":
+		return "`" + fieldname + "`"
+	case "sqlserver":
+		return "[" + fieldname + "]"
+	default:
+		return `\"` + fieldname + `\"`
+	}
+}
