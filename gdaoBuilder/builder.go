@@ -81,7 +81,7 @@ func up(s string) string {
 	return strings.ToUpper(trimNonLetterPrefix(s))
 }
 
-func buildstruct(dbtype, dbname, tableName, tableAlias string, packageName string, tableBean *TableBean) string {
+func buildstruct(dbtype, dbname, tableName, tableAlias string, packageName string, tableBean *TableBean, usetag bool) string {
 	datetime := time.Now().Format(time.DateTime)
 	ua := util.ToUpperFirstLetter
 	if tableAlias == "" {
@@ -153,7 +153,7 @@ import (
 		log.Println(bean)
 		rtype := goPtrType(bean.FieldType)
 		static_ = static_ + `
-var _` + structName + `_` + up(bean.FieldName) + ` = &base.Field[` + structName + `]{"` + bean.FieldName + `"}`
+var _` + structName + `_` + up(bean.FieldName) + ` = &base.Field[` + structName + `]{"` + tag(dbtype, bean.FieldName, usetag) + `"}`
 
 		field_ = field_ + `
 	` + up(bean.FieldName) + `      *base.Field[` + structName + `]`
@@ -305,7 +305,7 @@ func (t *` + structName + `)init(tablename string) {`
 func New` + structName + `(tablename ...string) (_r *` + structName + `) {`
 	newfunc = newfunc + `
 	_r = &` + structName + `{}
-	s := "` + tableName + `"
+	s := "` + tag(dbtype, tableName, usetag) + `"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
 	}
