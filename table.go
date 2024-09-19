@@ -87,10 +87,12 @@ func (t *Table[T]) UseCache(use bool) {
 //	hs = hs.Where(hs.Rowname.RLIKE(1)).GroupBy(hs.Id).Having(hs.Id.Count().LT(2)).Limit(2)
 //	hslist, _ := hs.Selects()
 func (t *Table[T]) Where(wheres ...*Where[T]) *Table[T] {
-	whereSqls := make([]string, len(wheres))
+	builder := strings.Builder{}
 	for i, w := range wheres {
-		whereSqls[i] = w.WhereSql
-		t.whereSql = " " + w.WhereSql + " "
+		builder.WriteString(w.WhereSql)
+		if i < len(wheres)-1 {
+			builder.WriteString(" and ")
+		}
 		if w.Value != nil {
 			t.args = append(t.args, w.Value)
 		}
@@ -100,8 +102,7 @@ func (t *Table[T]) Where(wheres ...*Where[T]) *Table[T] {
 			}
 		}
 	}
-	s := strings.Join(whereSqls, " and ")
-	t.whereSql = " where " + s
+	t.whereSql = " where " + builder.String()
 	return t
 }
 
