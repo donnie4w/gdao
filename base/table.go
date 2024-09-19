@@ -13,6 +13,12 @@ type Column[T any] interface {
 	Name() string
 }
 
+type Col string
+
+func (c Col) Name() string {
+	return string(c)
+}
+
 type Sort[T any] struct {
 	OrderByArg string
 }
