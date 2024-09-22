@@ -82,7 +82,7 @@ func (se *stmtexec) Prepare(sqlStr string, db *sql.DB) (stmt *sql.Stmt, err erro
 		hm = se.newmap(db)
 	}
 	if stmt, err = db.Prepare(sqlStr); err == nil {
-		if p, ok := hm.Swap(sqlStr, stmt); ok && p != nil {
+		if p, ok := hm.Put(sqlStr, stmt); ok && p != nil {
 			p.Close()
 		}
 	}
