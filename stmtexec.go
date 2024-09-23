@@ -17,7 +17,7 @@ import (
 	"sync/atomic"
 )
 
-var sqlWare = hashmap.NewLimitMap[string, *int64](1 << 19)
+var sqlWare = hashmap.NewLimitHashMap[string, *int64](1 << 19)
 var stmtExec = &stmtexec{stmtMap: hashmap.NewMap[*sql.DB, *hashmap.MapL[string, *sql.Stmt]](), mux: &sync.Mutex{}}
 var errorStmt = errors.New("")
 
