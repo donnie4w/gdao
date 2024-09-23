@@ -4,7 +4,7 @@ go 1.22.4
 
 require (
 	github.com/donnie4w/gofer v0.1.4
-	github.com/donnie4w/simplelog v0.1.0
+	github.com/donnie4w/simplelog v0.1.1
 )
 
 require (
