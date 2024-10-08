@@ -9,7 +9,8 @@ package base
 
 import (
 	"database/sql"
-	"github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/gofer/base58"
+	"github.com/donnie4w/gofer/uuid"
 )
 
 type TableBase interface {
@@ -44,7 +45,7 @@ type Scanner interface {
 	ToGdao()
 }
 
-var MapperPre = string(util.Base58EncodeForInt64(uint64(util.RandId())))
+var MapperPre = string(base58.EncodeForInt64(uint64(uuid.NewUUID().Int64())))
 
 type In struct {
 	Value any
