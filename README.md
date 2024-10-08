@@ -142,8 +142,31 @@ gdaoSlave.BindClass[dao.Hstest](mysqldb, gdao.MYSQL) // Here the master database
 hs1, _ := gdaoMapper.Select[dao.Hstest1]("user.selectHstest1", 1)
 fmt.Println(hs1)
 ```
+### 8.  dynamic SQL Mapping
 
-### 8. SqlBuilder
+```xml
+<!-- where if -->
+ <select id="demo1" resultType="Hstest">
+     SELECT * FROM hstest
+     <where>
+         <if test="rowname== 'hello'">
+             and rowname = #{rowname}
+         </if>
+         <if test="id >0">
+             AND id = #{id}
+         </if>
+     </where>
+ </select>
+```
+
+```go
+hs := dao.NewHstest()
+hs.SetId(12)
+gdaoMapper.SelectBean("dynamic.demo1", hs)  //exec mapper id  [SELECT * FROM hstest WHERE id = ?]ARGS[12]
+```
+
+
+### 9. SqlBuilder  Dynamic SQL
 
 ```go
 func Test_sqlBuilder_if(t *testing.T) {
