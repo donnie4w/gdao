@@ -140,7 +140,7 @@ func (t *slaveHandler) getMapper(namespace, id string) DBhandle {
 			if length == 1 {
 				return dblist[0]
 			} else if length > 1 {
-				return dblist[util.Rand(int(t.len()))]
+				return dblist[util.RandUint(uint(t.len()))]
 			}
 		}
 	}
@@ -162,7 +162,7 @@ func (t *slaveHandler) get(classname, tableName string) DBhandle {
 		if length == 1 {
 			return dblist[0]
 		} else if length > 1 {
-			return dblist[util.Rand(int(t.len()))]
+			return dblist[util.RandUint(uint(t.len()))]
 		}
 	}
 	return nil
