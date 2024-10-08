@@ -10,8 +10,10 @@ package gdaoCache
 import (
 	"fmt"
 	"github.com/donnie4w/gdao/base"
+	"github.com/donnie4w/gofer/base58"
 	. "github.com/donnie4w/gofer/hashmap"
 	"github.com/donnie4w/gofer/util"
+	"github.com/donnie4w/gofer/uuid"
 	"hash/fnv"
 	"strconv"
 	"time"
@@ -107,7 +109,7 @@ type CacheHandle struct {
 }
 
 func NewCacheHandle() *CacheHandle {
-	domain := string(util.Base58EncodeForInt64(uint64(util.RandId())))
+	domain := string(base58.EncodeForInt64(uint64(util.UUID64())))
 	expire := int64(5 * 60 * 1000)
 	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire, storemode: SOFT}
 }
@@ -131,7 +133,7 @@ func (c *CacheHandle) SetStoreMode(mode storeMode) *CacheHandle {
 }
 
 func NewCacheHandle2(expire int64, mode storeMode) *CacheHandle {
-	domain := string(util.Base58EncodeForInt64(uint64(util.RandId())))
+	domain := string(base58.EncodeForInt64(uint64(uuid.NewUUID().Int64())))
 	return &CacheHandle{mm: NewMap[string, *Map[uint64, *CacheBean]](), domain: domain, expire: expire, storemode: mode}
 }
 
