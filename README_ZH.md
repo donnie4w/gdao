@@ -150,8 +150,30 @@ gdaoSlave.BindClass[dao.Hstest](mysqldb, gdao.MYSQL) //这里主数据库为sqli
 hs1, _ := gdaoMapper.Select[dao.Hstest1]("user.selectHstest1", 1)
 fmt.Println(hs1)
 ```
+### 8.  动态SQL映射
 
-### 8.  SqlBuilder
+```xml
+<!-- where if -->
+ <select id="demo1" resultType="Hstest">
+     SELECT * FROM hstest
+     <where>
+         <if test="rowname== 'hello'">
+             and rowname = #{rowname}
+         </if>
+         <if test="id >0">
+             AND id = #{id}
+         </if>
+     </where>
+ </select>
+```
+
+```go
+hs := dao.NewHstest()
+hs.SetId(12)
+gdaoMapper.SelectBean("dynamic.demo1", hs)  //执行映射id  [SELECT * FROM hstest WHERE id = ?]ARGS[12]
+```
+
+### 9.  SqlBuilder 动态SQL
 
 ```go
 func Test_sqlBuilder_if(t *testing.T) {
