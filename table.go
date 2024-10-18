@@ -394,6 +394,7 @@ func (t *Table[T]) Update() (sql.Result, error) {
 	}
 
 	if g := t.getDB(false); g != nil {
+		t.clearExpire()
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
 		return nil, errInit
@@ -420,6 +421,7 @@ func (t *Table[T]) Insert() (sql.Result, error) {
 	}
 
 	if g := t.getDB(false); g != nil {
+		t.clearExpire()
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
 		return nil, errInit
@@ -462,6 +464,7 @@ func (t *Table[T]) ExecBatch() ([]sql.Result, error) {
 		Logger.Debug("[BATCH]["+t.sql+"]", t.batchArgs)
 	}
 	if g := t.getDB(false); g != nil {
+		t.clearExpire()
 		return g.ExecuteBatch(t.sql, t.batchArgs)
 	} else {
 		return nil, errInit
@@ -477,10 +480,15 @@ func (t *Table[T]) Delete() (sql.Result, error) {
 	}
 
 	if g := t.getDB(false); g != nil {
+		t.clearExpire()
 		return g.ExecuteUpdate(t.sql, t.args...)
 	} else {
 		return nil, errInit
 	}
+}
+
+func (t *Table[T]) clearExpire() {
+	gdaoCache.ClearExpireWrite[T]()
 }
 
 var serialize Serialize[map[string]any] = &Serializer{}
