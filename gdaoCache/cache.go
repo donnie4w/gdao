@@ -25,6 +25,18 @@ func UnbindClass[T gdaoStruct.TableClass]() {
 	gdaocache.Unbind(util.Classname[T]())
 }
 
+// BindExpireWriteClass When the data of the bound table is changed, that is,
+// when the operation is deleted, update, or inserted, the cache data is cleared
+func BindExpireWriteClass[T gdaoStruct.TableClass]() {
+	gdaocache.BindExpireWrite(util.Classname[T]())
+}
+
+// BindExpireWriteClassWithCacheHandle When the data of the bound table is changed, that is,
+// when the operation is deleted, update, or inserted, the cache data is cleared
+func BindExpireWriteClassWithCacheHandle[T gdaoStruct.TableClass](cacheHandle *CacheHandle) {
+	gdaocache.BindExpireWriteWithCacheHandle(util.Classname[T](), cacheHandle)
+}
+
 // BindTableNames binds one or more table names to enable the gdao caching mechanism for data operations on these tables.
 // Parameters:
 //
@@ -192,6 +204,13 @@ func GetDomain(classname, tablename string) string {
 	return gdaocache.GetDomain(classname, tablename)
 }
 
+func ClearExpireWrite[T any]() {
+	if gdaocache.IsExpireMapEmpty() {
+		return
+	}
+	gdaocache.ClearExpireWrite(util.Classname[T]())
+}
+
 func ClearClass[T gdaoStruct.TableClass]() (r bool) {
 	t := new(T)
 	tablename := ""
@@ -237,7 +256,15 @@ type cache interface {
 
 	BindWithCacheHandle(tablename string, cacheHandle *CacheHandle)
 
+	BindExpireWrite(tablename string)
+
+	BindExpireWriteWithCacheHandle(tablename string, cacheHandle *CacheHandle)
+
 	Unbind(tablename string)
+
+	ClearExpireWrite(tablename string)
+
+	IsExpireMapEmpty() bool
 
 	BindMapper(namespace string) error
 
