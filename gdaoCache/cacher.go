@@ -142,12 +142,13 @@ var defaultCacheHandle = NewCacheHandle()
 var err_no_mapperid = fmt.Errorf("mapper binding error: no valid mapping id could be found")
 
 type cacher struct {
-	cacheMap *Map[string, *CacheHandle]
-	rmap     *Map[string, string]
+	cacheMap  *Map[string, *CacheHandle]
+	rmap      *Map[string, string]
+	expiremap *MapL[string, string]
 }
 
 func newcache() cache {
-	c := &cacher{cacheMap: NewMap[string, *CacheHandle](), rmap: NewMap[string, string]()}
+	c := &cacher{cacheMap: NewMap[string, *CacheHandle](), rmap: NewMap[string, string](), expiremap: NewMapL[string, string]()}
 	go c.ticker()
 	return c
 }
@@ -163,8 +164,31 @@ func (c *cacher) BindWithCacheHandle(tablename string, cacheHandle *CacheHandle)
 	c.cacheMap.Put(cacheHandle.domain, cacheHandle)
 }
 
+func (c *cacher) BindExpireWrite(tablename string) {
+	c.Bind(tablename)
+	c.expiremap.Put(tablename, defaultCacheHandle.domain)
+}
+
+func (c *cacher) BindExpireWriteWithCacheHandle(tablename string, cacheHandle *CacheHandle) {
+	c.BindWithCacheHandle(tablename, cacheHandle)
+	c.expiremap.Put(tablename, cacheHandle.domain)
+}
+
+func (c *cacher) ClearExpireWrite(tablename string) {
+	if c.expiremap.Len() > 0 {
+		if d, ok := c.expiremap.Get(tablename); ok {
+			c.Clear(d, tablename)
+		}
+	}
+}
+
+func (c *cacher) IsExpireMapEmpty() bool {
+	return c.expiremap.Len() == 0
+}
+
 func (c *cacher) Unbind(tablename string) {
 	c.rmap.Del(tablename)
+	c.expiremap.Del(tablename)
 }
 
 func (c *cacher) BindMapper(namespace string) error {
