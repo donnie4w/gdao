@@ -168,7 +168,7 @@ var _` + structName + `_` + up(bean.FieldName) + ` = &base.Field[` + structName 
 
 	r = r + `
 type ` + structName + ` struct {
-	gdao.Table[` + structName + `]
+	*gdao.Table[` + structName + `]
 `
 	//for _, bean := range tableBean.Fieldlist {
 	//	s := `
@@ -210,7 +210,9 @@ func (u *` + structName + `) Get` + fieldName + `() (_r ` + rtype + `){
 }
 
 func (u *` + structName + `) Set` + fieldName + `(arg ` + rtype + `) *` + structName + `{
-	u.Put0(u.` + up(bean.FieldName) + `.FieldName, arg)
+	if u.` + up(bean.FieldName) + ` != nil {
+		u.Put0(u.` + up(bean.FieldName) + `.FieldName, arg)
+	}	
 	u._` + up(bean.FieldName) + ` = ` + mustptr(bean.FieldType, "&") + `arg
 	return u
 }
@@ -305,6 +307,7 @@ func (t *` + structName + `)init(tablename string) {`
 func New` + structName + `(tablename ...string) (_r *` + structName + `) {`
 	newfunc = newfunc + `
 	_r = &` + structName + `{}
+	_r.Table = &gdao.Table[` + structName + `]{}
 	s := "` + tag(dbtype, tableName, usetag) + `"
 	if len(tablename) > 0 && tablename[0] != "" {
 		s = tablename[0]
@@ -331,9 +334,9 @@ func (t *` + structName + `) Encode() ([]byte, error) {
 func (t *` + structName + `) Decode(bs []byte) (err error) {
 	var m map[string]any
 	if m, err = t.Table.Decode(bs); err == nil {
-		if !t.IsInit() {
-			t.ToGdao()
-		}
+		//if !t.IsInit() {
+		//	t.ToGdao()
+		//}
 		for name, bean := range m {
 			t.Scan(name, bean)
 		}
