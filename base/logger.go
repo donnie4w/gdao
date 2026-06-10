@@ -8,14 +8,13 @@
 package base
 
 import (
-	"fmt"
-	"github.com/donnie4w/simplelog/logging"
+	"github.com/donnie4w/go-logger/logger"
 )
 
-var _logging = logging.NewLogger().SetFormat(logging.FORMAT_LEVELFLAG)
+var _logging = logger.NewLogger().SetFormat(logger.FORMAT_LEVELFLAG)
 
-var logger = new(log)
-var Logger = logger
+var _logger = new(log)
+var Logger = _logger
 
 type log struct {
 	IsVaild bool
@@ -33,7 +32,7 @@ func (l *log) Debug(v ...interface{}) {
 
 func (l *log) Debugf(format string, v ...interface{}) {
 	if l.IsVaild {
-		_logging.Debug(fmt.Sprintf(format, v...))
+		_logging.Debugf(format, v...)
 	}
 }
 
@@ -45,7 +44,7 @@ func (l *log) Info(v ...interface{}) {
 
 func (l *log) Infof(format string, v ...interface{}) {
 	if l.IsVaild {
-		_logging.Info(fmt.Sprintf(format, v...))
+		_logging.Infof(format, v...)
 	}
 }
 
@@ -57,7 +56,7 @@ func (l *log) Warn(v ...interface{}) {
 
 func (l *log) Warnf(format string, v ...interface{}) {
 	if l.IsVaild {
-		_logging.Warn(fmt.Sprintf(format, v...))
+		_logging.Warnf(format, v...)
 	}
 }
 
@@ -69,6 +68,6 @@ func (l *log) Error(v ...interface{}) {
 
 func (l *log) Errorf(format string, v ...interface{}) {
 	if l.IsVaild {
-		_logging.Error(fmt.Sprintf(format, v...))
+		_logging.Errorf(format, v...)
 	}
 }
