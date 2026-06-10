@@ -151,7 +151,7 @@ func AsInt64(v any) int64 {
 		i, _ := strconv.ParseInt(string(v.([]uint8)), 10, 64)
 		return i
 	case string:
-		i, _ := strconv.ParseInt(string(v.(string)), 10, 64)
+		i, _ := strconv.ParseInt(v.(string), 10, 64)
 		return i
 	default:
 		return 0
@@ -188,7 +188,7 @@ func AsUint64(v any) uint64 {
 		i, _ := strconv.ParseUint(string(v.([]uint8)), 10, 64)
 		return i
 	case string:
-		i, _ := strconv.ParseUint(string(v.(string)), 10, 64)
+		i, _ := strconv.ParseUint(v.(string), 10, 64)
 		return i
 	default:
 		return 0
@@ -229,7 +229,7 @@ func AsFloat64(v any) float64 {
 		i, _ := strconv.ParseFloat(string(v.([]uint8)), 64)
 		return i
 	case string:
-		i, _ := strconv.ParseFloat(string(v.(string)), 64)
+		i, _ := strconv.ParseFloat(v.(string), 64)
 		return i
 	default:
 		return 0
@@ -309,8 +309,8 @@ func ScanValue(desc reflect.Value, src any) {
 			}
 		}
 	} else {
-		if logger.IsVaild {
-			logger.Warn("field '", desc, "' not found or cannot be set in type ", src)
+		if _logger.IsVaild {
+			_logger.Warn("field '", desc, "' not found or cannot be set in type ", src)
 		}
 	}
 }
