@@ -224,7 +224,7 @@ func (g *DataBean) scan(v any, free bool) (err error) {
 		//}
 
 		if scanner, ok := v.(Scanner); ok {
-			scanner.ToGdao()
+			//scanner.ToGdao()
 			for name, fieldBean := range g.fieldMapName {
 				scanner.Scan(name, fieldBean.Value())
 			}
