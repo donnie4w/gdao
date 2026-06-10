@@ -48,18 +48,26 @@ func (t *Table[T]) Init(s string, columns []Column[T]) {
 }
 
 func (t *Table[T]) IsInit() bool {
+	if t == nil {
+		return false
+	}
 	return t.tableName != "" && t.args != nil && t.modifymap != nil
 }
 
 func (t *Table[T]) Put0(k string, v any) {
-	t.modifymap[k] = v
+	if t != nil {
+		t.modifymap[k] = v
+	}
 }
 
 func (t *Table[T]) UseCache(use bool) {
-	if use {
-		t.isCache = 1
-	} else {
-		t.isCache = 2
+	t.assertGdaoBean()
+	if t != nil {
+		if use {
+			t.isCache = 1
+		} else {
+			t.isCache = 2
+		}
 	}
 }
 
@@ -87,6 +95,7 @@ func (t *Table[T]) UseCache(use bool) {
 //	hs = hs.Where(hs.Rowname.RLIKE(1)).GroupBy(hs.Id).Having(hs.Id.Count().LT(2)).Limit(2)
 //	hslist, _ := hs.Selects()
 func (t *Table[T]) Where(wheres ...*Where[T]) *Table[T] {
+	t.assertGdaoBean()
 	builder := strings.Builder{}
 	for i, w := range wheres {
 		builder.WriteString(w.WhereSql)
@@ -107,14 +116,17 @@ func (t *Table[T]) Where(wheres ...*Where[T]) *Table[T] {
 }
 
 func (t *Table[T]) UseTransaction(transaction Transaction) {
+	t.assertGdaoBean()
 	t.transaction = transaction
 }
 
 func (t *Table[T]) MustMaster(must bool) {
+	t.assertGdaoBean()
 	t.mustMaster = must
 }
 
 func (t *Table[T]) UseDBHandle(db DBhandle) *Table[T] {
+	t.assertGdaoBean()
 	t.dbhandler = db
 	return t
 }
@@ -268,6 +280,7 @@ func (t *Table[T]) getDB(queryType bool) (r DBhandle) {
 }
 
 func (t *Table[T]) GroupBy(columns ...Column[T]) *Table[T] {
+	t.assertGdaoBean()
 	ss := make([]string, 0, len(columns))
 	for _, v := range columns {
 		ss = append(ss, v.Name())
@@ -277,6 +290,7 @@ func (t *Table[T]) GroupBy(columns ...Column[T]) *Table[T] {
 }
 
 func (t *Table[T]) Having(havings ...*Having[T]) *Table[T] {
+	t.assertGdaoBean()
 	ss := make([]string, 0, len(havings))
 	for _, w := range havings {
 		ss = append(ss, w.HavingSql)
@@ -294,6 +308,7 @@ func (t *Table[T]) Having(havings ...*Having[T]) *Table[T] {
 }
 
 func (t *Table[T]) OrderBy(sorts ...*Sort[T]) *Table[T] {
+	t.assertGdaoBean()
 	ss := make([]string, 0, len(sorts))
 	for _, v := range sorts {
 		ss = append(ss, v.OrderByArg)
@@ -303,12 +318,14 @@ func (t *Table[T]) OrderBy(sorts ...*Sort[T]) *Table[T] {
 }
 
 func (t *Table[T]) Limit(limit int64) {
+	t.assertGdaoBean()
 	if limit > 0 {
 		t.limitAdapt(limit)
 	}
 }
 
 func (t *Table[T]) Limit2(offset, limit int64) {
+	t.assertGdaoBean()
 	if limit != 0 {
 		t.limit2Adapt(offset, limit)
 	}
@@ -362,6 +379,7 @@ func (t *Table[T]) limit2Adapt(offset, limit int64) {
 }
 
 func (t *Table[T]) Selects(columns ...Column[T]) (_r []*T, err error) {
+	t.assertGdaoBean()
 	if columns == nil {
 		columns = t.columns
 	}
@@ -369,6 +387,7 @@ func (t *Table[T]) Selects(columns ...Column[T]) (_r []*T, err error) {
 }
 
 func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
+	t.assertGdaoBean()
 	if columns == nil {
 		columns = t.columns
 	}
@@ -376,6 +395,7 @@ func (t *Table[T]) Select(columns ...Column[T]) (_r *T, err error) {
 }
 
 func (t *Table[T]) Update() (sql.Result, error) {
+	t.assertGdaoBean()
 	modifystr := make([]string, 0)
 	args := make([]any, 0)
 	for k, v := range t.modifymap {
@@ -402,6 +422,7 @@ func (t *Table[T]) Update() (sql.Result, error) {
 }
 
 func (t *Table[T]) Insert() (sql.Result, error) {
+	t.assertGdaoBean()
 	insertField := make([]string, 0)
 	insert_ := make([]string, 0)
 	args := make([]any, 0)
@@ -429,6 +450,7 @@ func (t *Table[T]) Insert() (sql.Result, error) {
 }
 
 func (t *Table[T]) AddBatch() {
+	t.assertGdaoBean()
 	if t.batchmap == nil {
 		t.batchmap = make(map[string][]any, 0)
 	}
@@ -442,6 +464,7 @@ func (t *Table[T]) AddBatch() {
 }
 
 func (t *Table[T]) ExecBatch() ([]sql.Result, error) {
+	t.assertGdaoBean()
 	if len(t.batchmap) == 0 {
 		return nil, nil
 	}
@@ -472,6 +495,7 @@ func (t *Table[T]) ExecBatch() ([]sql.Result, error) {
 }
 
 func (t *Table[T]) Delete() (sql.Result, error) {
+	t.assertGdaoBean()
 	t.modifySql = " delete from " + t.tableName
 	t.completeSql4Update()
 
@@ -493,18 +517,26 @@ func (t *Table[T]) clearExpire() {
 
 var serialize Serialize[map[string]any] = &Serializer{}
 
-func (t *Table[T]) Encode(m map[string]any) ([]byte, error) {
+func (*Table[T]) Encode(m map[string]any) ([]byte, error) {
 	return serialize.Encode(m)
 }
 
-func (t *Table[T]) Decode(data []byte) (map[string]any, error) {
+func (*Table[T]) Decode(data []byte) (map[string]any, error) {
 	return serialize.Decode(data)
 }
 
 func (t *Table[T]) UseCommentLine(commentline string) {
+	t.assertGdaoBean()
 	t.commentline = `/*` + commentline + `*/`
 }
 
 func (t *Table[T]) TableName() string {
+	t.assertGdaoBean()
 	return t.tableName
+}
+
+func (t *Table[T]) assertGdaoBean() {
+	if t == nil {
+		panic("The Table Bean is not a Gdao object. Please call the [ToGdao] function to convert it into a Gdao object.")
+	}
 }
