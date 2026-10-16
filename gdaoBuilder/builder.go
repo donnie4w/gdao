@@ -266,6 +266,9 @@ func (u *` + structName + `) Scan(fieldname string, value any) {
 
 	r = r + `
 func (t *` + structName + `) ToGdao() {
+	if t.Table == nil {
+		t.Table = &gdao.Table[` + structName + `]{}
+	}	
 	t.init("` + tableName + `")
 }
 `
